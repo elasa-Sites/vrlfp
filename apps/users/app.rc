@@ -96,7 +96,12 @@ fn users_init {
                 dir=etc/users/$logged_user
                 rm -f $dir/gender $dir/lookingfor $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr
 
-                for(i in post_arg_users_age post_arg_users_location post_arg_users_bio post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone)
+                if(~ $"post_arg_users_age [0-9]* && ~ `{echo $"post_arg_users_age | awk '{ print ($1 >= 18) }'} 1)
+                    echo -n $post_arg_users_age > $dir/age
+                if not if(! ~ $"post_arg_users_age '')
+                    _status='You must be at least 18 years of age to use this website'
+
+                for(i in post_arg_users_location post_arg_users_bio post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone)
                     echo -n $"$i > $dir/`{echo $i | sed 's/post_arg_users_//'}
 
                 for(i in post_arg_users_gender_Woman post_arg_users_gender_Man post_arg_users_gender_Agender post_arg_users_gender_Androgynous post_arg_users_gender_Bigender post_arg_users_gender_Cis_Man post_arg_users_gender_Cis_Woman post_arg_users_gender_Genderfluid post_arg_users_gender_Genderqueer post_arg_users_gender_Gender_Nonconforming post_arg_users_gender_Hijra post_arg_users_gender_Intersex post_arg_users_gender_Nonbinary post_arg_users_gender_Other_Gender post_arg_users_gender_Pangender post_arg_users_gender_Transfeminine post_arg_users_gender_Transmasculine post_arg_users_gender_Transsexual post_arg_users_gender_Trans_Man post_arg_users_gender_Trans_Woman post_arg_users_gender_Two_Spirit)

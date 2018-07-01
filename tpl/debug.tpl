@@ -1,4 +1,4 @@
-% if(~ $debug true) {
+% if(~ $debug true && check_user admin) {
 <h1>Debug</h1>
 <form method="POST" name="prompt">
 <input type="text" name="command" value="%($"post_arg_command%)">

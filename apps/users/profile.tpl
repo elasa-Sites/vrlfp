@@ -86,10 +86,16 @@ if(test -s $dir/age || test -s $dir/location || test -s $dir/gender ||
    test -s $dir/sexuality || test -s $dir/role || test -s $dir/kinks ||
    test -s $dir/games || test -s $dir/vr)
     echo '<ul>'
-if(test -s $dir/age)
-    echo '    <li><p><strong>Age:</strong>' `{cat $dir/age}^'</p></li>'
-if(test -s $dir/location)
-    echo '    <li><p><strong>Location:</strong>' `{cat $dir/location}^'</p></li>'
+if(test -s $dir/age) {
+    echo '    <li><p><strong>Age:</strong>'
+    cat $dir/age
+    echo '</p></li>'
+}
+if(test -s $dir/location) {
+    echo '    <li><p><strong>Location:</strong>'
+    cat $dir/location
+    echo '    </p></li>'
+}
 if(test -s $dir/gender) {
     echo -n '    <li>'
     for(i in `{cat $dir/gender})

@@ -5,11 +5,11 @@ if(check_user) {
     for(user in `{cat etc/users/$logged_user/date})
         if(grep -q $logged_user etc/users/$user/date &&
            test -s etc/users/$user/password)
-            echo '<p>It''s a match! <a href="/user/'$user'">'$user'</a> wants to date you too.</p>'
+            echo '<p>✔ It''s a match! <a href="/user/'$user'">'$user'</a> wants to date you too.</p>'
     for(user in `{cat etc/users/$logged_user/hookup})
         if(grep -q $logged_user etc/users/$user/hookup &&
            test -s etc/users/$user/password)
-            echo '<p>It''s a match! <a href="/user/'$user'">'$user'</a> wants to hook up with you too.</p>'
+            echo '<p>✔ It''s a match! <a href="/user/'$user'">'$user'</a> wants to hook up with you too.</p>'
     for(user in `{cat etc/users/$logged_user/hookup})
         if(grep -q $logged_user etc/users/$user/date &&
            test -s etc/users/$user/password)

@@ -1,0 +1,21 @@
+#!/bin/rc
+
+if(! ~ $#kwerc_root 0)
+    cd $kwerc_root
+
+if(! test -f bin/kwerc.rc) {
+    echo $0: 'Run in root of kwerc installation or set $kwerc_root'
+    exit
+}
+
+go get github.com/russross/blackfriday
+go get github.com/microcosm-cc/bluemonday
+go get golang.org/x/crypto/bcrypt
+
+cd bin
+go build kmarkdown.go
+go build genhash.go
+go build checkhash.go
+go build genid.go
+cd aux
+go build benchhash.go

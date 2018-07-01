@@ -1,0 +1,33 @@
+# This file contains the default kwerc settings.
+#
+# DO NOT EDIT, to customize copy to etc/initrc.local and edit at will.
+#
+# Some settings can also be set for a specific site or directory in their
+# respective _kwerc/config or their $masterSite/_kwerc/config file.
+
+# Set this to the location of your plan9port install.
+plan9port=/usr/lib64/plan9
+#plan9port=/usr/lib/plan9
+#plan9port=/usr/local/plan9
+
+# Set this to your favorite markdown formatter, eg., kmarkdown (fltr_cache
+# takes as an argument a filter, in the default configuration kmarkdown, that
+# caches output). Note that some kwerc components assume a markdown-like
+# formatter, but all major functionality should should be formatter agnostic.
+# Note kmarkdown includes a sanitizer for user-generated markdown -- if you
+# change the formatter and you are getting markdown from untrusted users, make
+# sure you have a sanitizer!
+formatter=(fltr_cache kmarkdown)
+
+# true to enable debugging, () to disable. Go to https://example.com/debug for
+# debugging tools. This is a big security risk so diable it in production!
+#debug=()
+debug=true
+
+# Globally enabled apps.
+enabled_apps=()
+
+# Default site variables, must be set in initrc.local or _kwerc/config, only siteTitle is required.
+#masterSite=example.com # Not required!
+#siteTitle='example site'
+#siteSubTitle='my beautiful website'

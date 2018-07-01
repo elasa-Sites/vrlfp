@@ -1,0 +1,7 @@
+siteTitle='VRLFP'
+siteSubTitle='Virtual Reality Looking For Partner'
+email='hello@vrlfp.net'
+confirmFrom='noreply@vrlfp.net'
+conf_enable_users
+conf_hide_paths /img
+if(~ $req_path /discord) extraHttpHeaders=($extraHttpHeaders 'Status: 303 See Other' 'Location: '`{curl -s https://discordapp.com/api/guilds/455219574036496404/widget.json | sed 's,.*(https://discordapp.com/invite/[a-zA-Z0-9]*).*,\1,' | tr -d $NEW_LINE})

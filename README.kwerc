@@ -1,0 +1,110 @@
+kwerc - a series of patches to make [werc](http://werc.cat-v.org/) more useful for building modern web apps
+-----------------------------------------------------------------------------------------------------------
+
+kwerc (*k*yle's *werc*) is an attempt at a good tool for doing terrible things
+(i.e. modern web development).
+
+werc is a content management system and web (anti-)framework designed to be
+simple to use, simple to setup, simple to hack on, and to not get in the way
+while allowing users easy customization.
+
+kwerc is a fork of werc that adds some features I found myself reusing in a lot
+of werc projects, plus a few new ideas. Hopefully it saves some time as a
+base for modern sites.
+
+Features
+--------
+
+* User password hashing/salting and secure session cookies.
+* Web interface for user registration.
+* reCAPTCHA for posts, comments, and registration (the robots have figured out
+  that [Glenda is a cute bunny](http://code.9front.org/hg/werc/file/92f7463dac1a/apps/bridge/foot.tpl#l27)).
+* Integrate [maht's file upload patch](https://groups.google.com/forum/#!topic/werc9/Wcpk4IO-Fps).
+* Use a fancier Markdown parser with sanitization.
+* Remove werc's default styling and layout so it's easier to design a site from scratch.
+* Include a sample/template site with a minimal Material Design stylesheet and layout.
+* [Progressive Web App](https://developers.google.com/web/progressive-web-apps/) support.
+
+Installation
+------------
+
+Requirements:
+
+* An http server that can handle CGIs
+* plan9port
+* Golang
+* mail(1) configured to send (for user account verification)
+
+Instructions:
+
+Untar kwerc at your desired location, configure httpd to use
+/path-to-your-werc-installation/bin/werc.rc as a cgi-script, it is recommended
+that you make werc.rc handle all non-static files (this can be done by setting
+it up as your 404 handler) and setup your virtual hosts to handle static files
+by setting the document root for the domain to
+/path-to-werc-installation/sites/yourdomain.com/, and create a directory for
+your web site under sites/ where you can start adding content right away.
+
+If you will want to allow updates via the web interface (eg., for wiki or
+comments apps) make sure all files under sites/ are writable by the user your
+cgi will run as, usually www-data, for example by doing: chown -R :www-data
+sites/; chmod -R g+w sites/
+
+Run ./INSTALL to build the Golang Markdown parser and security programs.
+
+For general configuration options copy etc/initrc to etc/initrc.local and
+customize it as needed. Site (and directory) specific options can be set in a
+sites/example.com/_werc/config file inside the site's directory. To customize
+templates and included files you can store your own version of the files in lib/
+under sites/example.com/_werc/lib.
+
+Set $plan9port in etc/initrc.local.
+
+Copy your plan9port rc and awk to /bin:
+
+    cp $PLAN9/bin/rc $PLAN9/bin/awk /bin/
+
+There is a sample site with a minimal Material Design stylesheet and layout
+under sites/example.com. Feel free to use it as a tempalte for your own site.
+
+For more details, see werc's documentation: http://werc.cat-v.org/docs/
+
+Contact
+-------
+
+For comments, suggestions, bug reports or patches: m@kfarwell.org
+
+You might also be interested in the werc mailing list: http://werc.cat-v.org
+
+If you have a public website that uses kwerc I would love to hear about it and
+get feedback about your experience setting it up.
+
+Thanks
+------
+
+Uriel, Garbeam, Kris Maglione, sqweek, soul9, mycroftiv, maht, yiyus, cinap_lenrek, khm
+and many others for werc.
+
+Many of the ideas for kwerc came from using werc in
+[Tokumei](https://tokumei.co/). Thanks to [Keefer Rourke](https://krourke.org/)
+for his contributions there.
+
+License
+-------
+
+You can find the kwerc source code at https://code.kfarwell.org/kwerc. It is
+distributed under the following terms:
+
+Copyright (c) 2018 Kyle Farwell
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.

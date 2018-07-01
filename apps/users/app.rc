@@ -1,0 +1,282 @@
+# TODO: move vrlfp code out of the global app
+
+fn conf_enable_users {
+    conf_enable_app users
+}
+
+fn users_init {
+    if(~ $req_path /register) {
+        handler_body_main=(tpl_handler `{get_lib_file users/register.tpl apps/users/register.tpl})
+
+        if(~ $REQUEST_METHOD POST &&
+           validate_new_user $"post_arg_users_user $"post_arg_users_pass $"post_arg_users_pass2 $"post_arg_users_email $"post_arg_users_tos) {
+            add_new_user $post_arg_users_user $post_arg_users_pass $post_arg_users_email
+            email_new_user $post_arg_users_user
+            post_redirect $base_url/user/$post_arg_users_user
+        }
+    }
+
+    if not if(~ $req_path /login) {
+        handler_body_main=(tpl_handler `{get_lib_file users/login.tpl apps/users/login.tpl})
+    }
+
+    if not if(~ $req_path /user/* && ! ~ $req_path /user/) {
+        if(test -d etc/users/`{basename $req_path}) {
+            handler_body_main=(tpl_handler `{get_lib_file users/profile.tpl apps/users/profile.tpl})
+
+            if(check_user) {
+                if(~ $"post_arg_users_decision date ||
+                   ~ $"post_arg_users_decision hookup ||
+                   ~ $"post_arg_users_decision pass) {
+                    user=`{basename $req_path}
+                    echo $user >> etc/users/$logged_user/$post_arg_users_decision
+
+                    if(! ~ $"post_arg_users_decision pass &&
+                       grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
+                        sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' < $sitedir/_kwerc/mail/mutual |
+                            sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$logged_user/email}
+                        sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' < $sitedir/_kwerc/mail/mutual |
+                            sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email}
+                    }
+
+                    post_redirect $base_url/random
+                }
+                if not if(~ $"post_arg_users_decision undate) {
+                    sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/date > etc/users/$logged_user/date.tmp
+                    mv etc/users/$logged_user/date.tmp etc/users/$logged_user/date
+                }
+                if not if(~ $"post_arg_users_decision unhookup) {
+                    sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/hookup > etc/users/$logged_user/hookup.tmp
+                    mv etc/users/$logged_user/hookup.tmp etc/users/$logged_user/hookup
+                }
+                if not if(~ $"post_arg_users_decision unpass) {
+                    sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/pass > etc/users/$logged_user/pass.tmp
+                    mv etc/users/$logged_user/pass.tmp etc/users/$logged_user/pass
+                }
+            }
+        }
+        if not if(test -d etc/unconfirmed/`{basename $req_path}) {
+            handler_body_main=(tpl_handler `{get_lib_file users/unconfirmed.tpl apps/users/unconfirmed.tpl})
+
+            if(~ $"post_arg_users_resend yes) {
+                email_new_user `{basename $req_path}
+                notify_success='Sent!'
+            }
+        }
+    }
+
+    if not if(~ $req_path /random) {
+        if(check_user)
+            for(userdir in `{ls etc/users | shuf})
+                if(! grep -q `{basename $userdir} etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/pass &&
+                   ! ~ `{basename $userdir} $logged_user)
+                    post_redirect $base_url/user/`{basename $userdir}
+        handler_body_main=(tpl_handler `{get_lib_file users/rip.tpl apps/users/rip.tpl})
+    }
+
+    if not if(~ $req_path /matches) {
+        handler_body_main=(tpl_handler `{get_lib_file users/matches.tpl apps/users/matches.tpl})
+
+        if(check_user && ~ $"post_arg_clearpasses yes) {
+            rm etc/users/$logged_user/pass
+            touch etc/users/$logged_user/pass
+        }
+    }
+
+    if not if(~ $req_path /edit) {
+        handler_body_main=(tpl_handler `{get_lib_file users/edit.tpl apps/users/edit.tpl})
+
+        if(! ~ $"post_arg_users_submit '') {
+            _status=()
+            check_user
+
+            if(! test -s etc/users/$"logged_user/password)
+                _status='Profile error. Try logging out/in. If you just registered or changed your email, ensure you have confirmed your email.'
+            if not {
+                dir=etc/users/$logged_user
+                rm -f $dir/gender $dir/lookingfor $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr
+
+                for(i in post_arg_users_age post_arg_users_location post_arg_users_bio post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone)
+                    echo -n $"$i > $dir/`{echo $i | sed 's/post_arg_users_//'}
+
+                for(i in post_arg_users_gender_Woman post_arg_users_gender_Man post_arg_users_gender_Agender post_arg_users_gender_Androgynous post_arg_users_gender_Bigender post_arg_users_gender_Cis_Man post_arg_users_gender_Cis_Woman post_arg_users_gender_Genderfluid post_arg_users_gender_Genderqueer post_arg_users_gender_Gender_Nonconforming post_arg_users_gender_Hijra post_arg_users_gender_Intersex post_arg_users_gender_Nonbinary post_arg_users_gender_Other_Gender post_arg_users_gender_Pangender post_arg_users_gender_Transfeminine post_arg_users_gender_Transmasculine post_arg_users_gender_Transsexual post_arg_users_gender_Trans_Man post_arg_users_gender_Trans_Woman post_arg_users_gender_Two_Spirit)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_gender_//' >> $dir/gender
+
+                for(i in post_arg_users_lookingfor_Looking_For_Date___VR_Only post_arg_users_lookingfor_Looking_For_Hookup___VR_Only post_arg_users_lookingfor_Looking_For_Date___VR_and_IRL post_arg_users_lookingfor_Looking_For_Hookup___VR_and_IRL post_arg_users_lookingfor_Looking_For_Serious_Relationship post_arg_users_lookingfor_Just_Roleplaying)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_lookingfor_//' >> $dir/lookingfor
+
+                for(i in post_arg_users_status_Single post_arg_users_status_Seeing_Someone post_arg_users_status_Married)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_status_//' >> $dir/status
+
+                for(i in post_arg_users_type_Monogamous post_arg_users_type_Polygamous)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_type_//' >> $dir/type
+
+                for(i in post_arg_users_sexuality_Straight___VR post_arg_users_sexuality_Gay___VR post_arg_users_sexuality_Bisexual___VR post_arg_users_sexuality_Asexual___VR post_arg_users_sexuality_Demisexual___VR post_arg_users_sexuality_Heteroflexible___VR post_arg_users_sexuality_Homoflexible___VR post_arg_users_sexuality_Lesbian___VR post_arg_users_sexuality_Pansexual___VR post_arg_users_sexuality_Queer___VR post_arg_users_sexuality_Questioning___VR post_arg_users_sexuality_Sapiosexual___VR post_arg_users_sexuality_Trapsexual___VR post_arg_users_sexuality_Trapsexual___VR_Mutes_Only post_arg_users_sexuality_Heteroromantic___VR post_arg_users_sexuality_Homoromantic___VR post_arg_users_sexuality_Biromantic___VR post_arg_users_sexuality_Aromantic___VR post_arg_users_sexuality_Demiromantic___VR post_arg_users_sexuality_Panromantic___VR post_arg_users_sexuality_Sapioromantic___VR post_arg_users_sexuality_Trapromantic___VR post_arg_users_sexuality_Trapromantic___VR_Mutes_Only post_arg_users_sexuality_Straight___IRL post_arg_users_sexuality_Gay___IRL post_arg_users_sexuality_Bisexual___IRL post_arg_users_sexuality_Asexual___IRL post_arg_users_sexuality_Demisexual___IRL post_arg_users_sexuality_Heteroflexible___IRL post_arg_users_sexuality_Homoflexible___IRL post_arg_users_sexuality_Lesbian___IRL post_arg_users_sexuality_Pansexual___IRL post_arg_users_sexuality_Queer___IRL post_arg_users_sexuality_Questioning___IRL post_arg_users_sexuality_Sapiosexual___IRL post_arg_users_sexuality_Trapsexual___IRL post_arg_users_sexuality_Heteroromantic___IRL post_arg_users_sexuality_Homoromantic___IRL post_arg_users_sexuality_Biromantic___IRL post_arg_users_sexuality_Aromantic___IRL post_arg_users_sexuality_Demiromantic___IRL post_arg_users_sexuality_Panromantic___IRL post_arg_users_sexuality_Sapioromantic___IRL post_arg_users_sexuality_Trapromantic___IRL)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_sexuality_//' >> $dir/sexuality
+
+                for(i in post_arg_users_role_Submissive post_arg_users_role_Dominant post_arg_users_role_Switch)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_role_//' >> $dir/role
+
+                for(i in post_arg_users_kinks_Ageplayer post_arg_users_kinks_Boy_or_Girl post_arg_users_kinks_Daddy_or_Mommy post_arg_users_kinks_Brat post_arg_users_kinks_Brat_Tamer post_arg_users_kinks_Degradee post_arg_users_kinks_Degrader post_arg_users_kinks_Exhibitionist post_arg_users_kinks_Experimentalist post_arg_users_kinks_Masochist post_arg_users_kinks_Sadist post_arg_users_kinks_Master_or_Mistress post_arg_users_kinks_Slave post_arg_users_kinks_Owner post_arg_users_kinks_Pet post_arg_users_kinks_Hunter post_arg_users_kinks_Prey post_arg_users_kinks_Rigger post_arg_users_kinks_Rope_Bunny post_arg_users_kinks_Voyeur)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_kinks_//' >> $dir/kinks
+
+                for(i in post_arg_users_games_VRChat post_arg_users_games_Rec_Room post_arg_users_games_AltspaceVR post_arg_users_games_vTime post_arg_users_games_Sansar post_arg_users_games_High_Fidelity post_arg_users_games_TheWaveVR post_arg_users_games_Facebook_Spaces)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_games_//' >> $dir/games
+
+                for(i in post_arg_users_vr_Mobile_VR post_arg_users_vr_Standing_VR post_arg_users_vr_360_VR post_arg_users_vr_Roomscale_VR post_arg_users_vr_Full_Body_VR)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_vr_//' >> $dir/vr
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_email '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not
+                if(! test -s etc/users/$logged_user/password ||
+                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true)
+                    _status=($_status 'Wrong password.')
+                if not if(~ $"post_arg_users_email '' || ~ $"post_arg_users_email `{cat etc/users/$logged_user/email})
+                    _status=($_status 'Missing or unchanged email'.)
+                if not {
+                    echo $post_arg_users_email > etc/users/$logged_user/email
+                    rm -rf etc/sessions/`{cat etc/users/$logged_user/session}
+                    rm -f etc/users/$logged_user/session
+                    mv etc/users/$logged_user etc/unconfirmed/
+                    email_new_user $logged_user
+                    #post_redirect $base_url/user/$logged_user
+                }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_password '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not
+                if(! test -s etc/users/$logged_user/password ||
+                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_passold} true)
+                    _status=($_status 'Wrong current password.')
+                if not if(! validate_password $logged_user $"post_arg_users_pass $"post_arg_users_pass2)
+                    _status=($_status 'New password missing, non-matching, or insecure.')
+                if not {
+                    echo -n $pass | genhash > $udir/password
+                    notify_success='Password changed.'
+                }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_delete '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not
+                if(! test -s etc/users/$logged_user/password ||
+                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true) {
+                    _status=($_status 'Wrong password.')
+                }
+                if not {
+                    rm -r etc/users/$logged_user
+                    notify_success='Account deleted.'
+                    post_redirect $base_url/register
+                }
+
+            notify_errors=$_status
+            status=$_status
+        }
+    }
+
+    if not if(~ $req_path /confirm/*) {
+        handler_body_main=(tpl_handler `{get_lib_file users/confirm.tpl apps/users/confirm.tpl})
+
+        _status=()
+        cdir=etc/confirm/`{basename $req_path}
+
+        if(! test -d $cdir)
+            _status='Invalid confirmation code. Check the link or try resending.'
+        if not if(test -d etc/users/`{cat $cdir/user})
+            _status='Your email has already been confirmed.'
+        if not if(~ `{awk '{ print ($1 < '`{date -nu}^') }' < $cdir/expiry} 1)
+            _status='Confirmation code expired.'
+        if not {
+            mv etc/unconfirmed/`{cat $cdir/user} etc/users/
+            notify_success='Your email has been confirmed. Welcome!'
+        }
+
+        notify_errors=$_status
+        status=$_status
+    }
+}
+
+fn validate_new_user {
+    user=$1; pass=$2; pass2=$3; email=$4; tos=$5
+    _status=()
+
+    if(~ $"user '' || ! echo $user | sed 1q | grep -s '^'$allowed_user_chars'+$')
+        _status='Missing or invalid username. Allowed characters: '^$allowed_user_chars^'+'
+    if not if(test -d etc/users/$user || test -d etc/unconfirmed/$user)
+        _status='Username '''^$user^''' already taken. Please choose a different one.'
+
+    if(! ~ $"user '')
+        echo $"user >> etc/badpasswords
+    if(! validate_password $"user $"pass $"pass2)
+        _status=($_status 'Password missing, non-matching, or insecure.')
+
+    if(~ $"email '')
+        _status=($_status 'Missing email.')
+
+    if(! ~ $"tos yes)
+        _status=($_status 'You must be at least 18 years of age and agree to the <a href="/terms">Terms of Service</a> to use this website.')
+
+    notify_errors=$_status
+    status=$_status
+}
+
+fn validate_password {
+    user=$1; pass=$2; pass2=$3
+
+    if(~ $"pass '' ||
+       ! ~ $"pass $"pass2 ||
+       ~ `{echo $"pass | awk '{ print (length($1) < 8) }'} 1 ||
+       grep -si $"pass etc/badpasswords ||
+       echo $"pass | grep -si $"user)
+        status='Bad password.'
+    if not status=''
+}
+
+fn add_new_user {
+    user=$1; pass=$2; email=$3
+    udir=etc/unconfirmed/$user
+
+    mkdir $udir $sitedir/img/users/$user
+    echo $email > $udir/email
+    echo -n $pass | genhash > $udir/password
+    touch $udir/date $udir/hookup $udir/pass
+}
+
+fn email_new_user {
+    user=$1
+
+    confirm=`{genid 32}
+    mkdir etc/confirm/$confirm
+    echo $user > etc/confirm/$confirm/user
+    date -nu | awk '{ print ($1 + 86400) }' > etc/confirm/$confirm/expiry
+
+    if(test -f $sitedir/_kwerc/mail/confirm)
+        body=$sitedir/_kwerc/mail/confirm
+    if not
+        body=etc/mail/confirm
+
+    sed 's,\$confirmLink,'$base_url'/confirm/'$confirm',g; s,\$siteTitle,'$siteTitle',g' < $body |
+        sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/unconfirmed/$user/email}
+}

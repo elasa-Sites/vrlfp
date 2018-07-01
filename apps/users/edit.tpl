@@ -284,11 +284,12 @@
 % echo -n '    <textarea name="users_bio" id="bio">'
 % if(test -s $dir/bio) escape_html < $dir/bio
 </textarea>
-    <label for="bio">Bio</label>
+    <label for="bio">Bio (you can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown syntax</a> here)</label>
 
     <p><button type="submit" name="users_submit" value="yes">Submit</button></p><br />
 </form>
 
+<!--
 <form action="" method="POST">
     <h5>Upload pictures</h5>
     <input type="file" name="pictures" multiple accept="image/*">
@@ -328,6 +329,7 @@
 
     <p><button type="submit" name="users_submit_delete" value="yes">Delete</button></p><br />
 </form>
+-->
 % }
 % if not {
     <p><a href="/login" class="btn">Login</a></p>

@@ -19,7 +19,7 @@
           echo '<em>'
           basename $file
           echo '</em><br />'
-          cat $file
+          escape_html < $file
           echo '<br />'
       }
 %}

@@ -76,9 +76,21 @@ if(! ~ $"logged_user '' &&
 
 <div class="polaroids">
 % for(i in `{ls $sitedir/img/users/$user}) {
-    <img src="/img/users/%($user%)/%(`{basename $i}%)" onclick="window.location='/img/users/%($user%)/%(`{basename $i}%)'" /></a>
+    <img src="/img/users/%($user%)/%(`{basename $i}%)" onclick="window.location='/img/users/%($user%)/%(`{basename $i}%)'" />
+% }
+% for(i in `{ls $sitedir/img/users/nsfw/$user}) {
+%     if(test -f etc/users/$"logged_user/nsfw) {
+    <img src="/img/users/nsfw/%($user%)/%(`{basename $i}%)" onclick="window.location='/img/users/nsfw/%($user%)/%(`{basename $i}%)'" />
+%     }
+%     if not {
+    <img src="/img/nsfw.png" onclick="window.location='/edit'" />
+%     }
 % }
 </div>
+
+% if(test -s $dir/sketchfab) {
+<iframe width="100%" height="480" src="https://sketchfab.com/models/%(`{cat $dir/sketchfab}%)/embed" frameborder="0" allowvr allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" onmousewheel="" class="card" style="padding: 0"></iframe>
+% }
 
 %{
 if(test -s $dir/age || test -s $dir/location || test -s $dir/gender ||

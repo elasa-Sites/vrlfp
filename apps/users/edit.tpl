@@ -286,6 +286,14 @@
 </textarea>
     <label for="bio">Bio (you can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown syntax</a> here)</label>
 
+    <input type="text" name="users_sketchfab" id="sketchfab" value="%(`{if(test -s $dir/sketchfab) cat $dir/sketchfab}%)">
+    <label for="sketchfab">Sketchfab 3D model ID (upload your avatar <a href="https://sketchfab.com/" target="_blank">here</a> and copy the 32 character ID from your model URL)</label>
+
+    <p>
+        <input type="checkbox" name="users_nsfw" id="nsfw" value="yes" %(`{if(test -f $dir/nsfw) echo 'checked="yes"'}%)>
+        <label for="nsfw">Show NSFW profile images?</label>
+    </p>
+
     <p><button type="submit" name="users_submit" value="yes">Submit</button></p><br />
 </form>
 

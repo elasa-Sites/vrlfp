@@ -268,7 +268,7 @@ fn add_new_user {
     user=$1; pass=$2; email=$3
     udir=etc/unconfirmed/$user
 
-    mkdir $udir $sitedir/img/users/$user
+    mkdir $udir $sitedir/img/users/$user $sitedir/img/users/nsfw/$user
     echo $email > $udir/email
     echo -n $pass | genhash > $udir/password
     touch $udir/date $udir/hookup $udir/pass

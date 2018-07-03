@@ -13,6 +13,9 @@
 
 % if(! ~ $"logged_user '') {
 %     if(~ $logged_user $user) {
+%         if(! test -s $dir/age || ! test -s $dir/gender || ! test -s $dir/lookingfor || ! test -s $dir/sexuality) {
+<p class="notify_errors">✘ You must fill out your age, gender, sexuality, and the type of relationship you're looking for before your profile will be shown to other users on the site!</p>
+%         }
 <a href="/edit" class="btn">Edit profile</a>
 <form action="/login" method="POST"><button name="logout" value="yes">Logout</button></form>
 %     }

@@ -19,6 +19,16 @@ if(check_user) {
            test -s etc/users/$user/password)
             echo '<p><a href="/user/'$user'">'$user'</a> wants to hook up with you.</p>'
 
+    if(check_user premium) {
+        echo '<h1>They like you!</h1>'
+        for(user in `{grep $logged_user etc/users/*/date | sed 's,etc/users/(.*)/date.*,\1,'})
+            if(! grep -q $user etc/users/$logged_user/date etc/users/$logged_user/hookup)
+                echo '<p><a href="/user/'$user'">'$user'</a> wants to date you.</p>'
+        for(user in `{grep $logged_user etc/users/*/hookup | sed 's,etc/users/(.*)/hookup.*,\1,'})
+            if(! grep -q $user etc/users/$logged_user/date etc/users/$logged_user/hookup)
+                echo '<p><a href="/user/'$user'">'$user'</a> wants to hook up with you.</p>'
+    }
+
     echo '<h1>Future matches?</h1>'
     for(user in `{cat etc/users/$logged_user/date})
         if(! grep -q $logged_user etc/users/$user/date etc/users/$user/hookup &&

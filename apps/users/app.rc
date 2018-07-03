@@ -29,14 +29,16 @@ fn users_init {
                    ~ $"post_arg_users_decision hookup ||
                    ~ $"post_arg_users_decision pass) {
                     user=`{basename $req_path}
-                    echo $user >> etc/users/$logged_user/$post_arg_users_decision
 
-                    if(! ~ $"post_arg_users_decision pass &&
-                       grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
-                        sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' < $sitedir/_kwerc/mail/mutual |
-                            sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$logged_user/email}
-                        sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' < $sitedir/_kwerc/mail/mutual |
-                            sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email}
+                    if(! grep -q $user etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/pass) {
+                        echo $user >> etc/users/$logged_user/$post_arg_users_decision
+                        if(! ~ $"post_arg_users_decision pass &&
+                           grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
+                            sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' < $sitedir/_kwerc/mail/mutual |
+                                sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$logged_user/email}
+                            sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' < $sitedir/_kwerc/mail/mutual |
+                                sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email}
+                        }
                     }
 
                     post_redirect $base_url/random
@@ -69,7 +71,8 @@ fn users_init {
         if(check_user)
             for(userdir in `{ls etc/users | shuf})
                 if(! grep -q `{basename $userdir} etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/pass &&
-                   ! ~ `{basename $userdir} $logged_user)
+                   ! ~ `{basename $userdir} $logged_user &&
+                   test -s $userdir/age && test -s $userdir/gender && test -s $userdir/lookingfor && test -s $userdir/sexuality)
                     post_redirect $base_url/user/`{basename $userdir}
         handler_body_main=(tpl_handler `{get_lib_file users/rip.tpl apps/users/rip.tpl})
     }

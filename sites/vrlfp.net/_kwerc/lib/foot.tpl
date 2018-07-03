@@ -16,10 +16,10 @@
     <div>
         <div class="desktop">
             Made with ❤ in cyberspace
-            <span class="right">© %($siteTitle%) 2018</span>
+            <span class="right">© %($siteTitle%), Inc. 2018</span>
         </div>
         <div class="mobile center">
-            <span>© %($siteTitle%) 2018</span>
+            <span>© %($siteTitle%), Inc. 2018</span>
         </div>
     </div>
 </footer>

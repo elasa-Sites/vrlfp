@@ -1,0 +1,5 @@
+#!/bin/rc
+
+# This is a wrapper script for broken http servers like recent lighttpd versions which throw away cgi's stderr.
+
+./kwerc.rc >>[2]/tmp/kwerclog.txt

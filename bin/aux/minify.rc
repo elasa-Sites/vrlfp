@@ -1,0 +1,21 @@
+#!/bin/rc
+
+if(! ~ $#kwerc_root 0)
+    cd $kwerc_root
+
+if(! test -d sites/) {
+    echo $0: 'Run in root of kwerc installation or set $kwerc_root' >[1=2]
+    exit
+}
+
+rm -f sites/*/_kwerc/css/*.min.css
+for(i in sites/*/_kwerc/css/*.css) {
+    echo $i
+    csso $i --comments none > `{echo $i | sed 's/\.css/.min.css/'}
+}
+
+#rm -f sites/*/_kwerc/js/*.min.js
+#for(i in sites/*/_kwerc/js/*.js) {
+#    echo $i
+#    uglifyjs -mcv $i > `{echo $i | sed 's/\.js/.min.js/'}
+#}

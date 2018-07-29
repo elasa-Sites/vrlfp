@@ -1,0 +1,12 @@
+#!/bin/rc
+rfork n
+
+# Route requests to kwerc.
+# Change the kwerc path to match your system.
+if(~ $SERVER_NAME *){
+	PATH_INFO=$location
+	FS_ROOT=/var/www/kwerc/sites/$SERVER_NAME
+	exec static-or-cgi /var/www/kwerc/bin/kwerc.rc
+}
+if not
+	error 503

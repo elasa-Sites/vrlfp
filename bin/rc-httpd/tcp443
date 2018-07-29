@@ -1,0 +1,7 @@
+#!/bin/rc
+# For use with listen(8).
+# Change rc-httpd path to match your system.
+# Change /var/log/www to location of logfile.
+exec tlss -c /etc/ssl/server.crt \
+          -k /etc/ssl/server.key
+          /var/www/kwerc/bin/contrib/rc-httpd/rc-httpd >>[2]/var/log/rc-httpd

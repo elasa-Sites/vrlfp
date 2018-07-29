@@ -1,0 +1,427 @@
+fn get_lib_file {
+    if(! ~ $#sitedir 0 && test -f $sitedir/_kwerc/lib/$1)
+        echo -n $sitedir/_kwerc/lib/$1
+    if not if(! ~ $#masterSite 0 && test -f $sitesdir/$masterSite/_kwerc/lib/$1)
+        echo -n $sitesdir/$masterSite/_kwerc/lib/$1
+    if not if(test -f lib/$1)
+        echo -n lib/$1
+    if not if(~ $#* 2)
+        echo -n $2
+    if not
+        status='Can''t find lib file: '$1
+}
+
+fn template { awk -f bin/template.awk $* | rc $rcargs }
+
+allowed_user_chars='[a-zA-Z0-9_]'
+# login_user can't be used from a template because it sets a cookie 
+fn login_user {
+    if(! ~ $"post_arg_username '' && test -d etc/deactivated/$"post_arg_username && ~ $req_path /login)
+        post_redirect $base_url/activate
+    if not if(! ~ $"post_arg_logout yes && get_user $*) {
+        session=`{cat etc/users/$logged_user/session}
+        if(~ `{cat etc/sessions/$session/expiry etc/sessions/$session/expiryabs | tr $NEW_LINE ' ' | awk '{ print ($1 < $2) }'} 1)
+            set_cookie id $session `{date -u `{cat etc/sessions/$session/expiry} | sed 's/(...) (...) (..) (........) (...) (....)/\1, \3 \2 \6 \4 \5/; s/  / 0/'}
+        if not
+            set_cookie id $session `{date -u `{cat etc/sessions/$session/expiryabs} | sed 's/(...) (...) (..) (........) (...) (....)/\1, \3 \2 \6 \4 \5/; s/  / 0/'}
+    }
+}
+
+fn logout_user {
+    session=`{get_cookie id}
+    if(! ~ $"session '' && test -f etc/sessions/$session) {
+        user=`{cat etc/sessions/$session/name}
+        rm -rf etc/users/$user/session etc/sessions/$session
+    }
+    if not if(! ~ $"logged_user '')
+        user=$logged_user
+    set_cookie id no 'Thu, 01 Jan 1970 00:00:00 GMT'
+    if(~ $req_path /logout && ! ~ $"user '')
+        post_redirect /user/$user
+}
+
+fn check_user {
+    get_user
+    g=$1
+    _status=$status
+    if(! ~ $"_status '')
+        _status=(Not logged in: $"_status)
+    if not if(! ~ $#* 0 && ! ~ $logged_user $* && ! test -f $kwerc_root/etc/users/$logged_user/$g >[2]/dev/null)
+        _status=(User $logged_user not in: $*)
+    status=$_status
+}
+
+fn get_user {
+    if(~ $#logged_user 0) {
+        if(~ $#* 2)
+            auth_user $1 $2
+        if not if(~ $REQUEST_METHOD POST && ~ $req_path /login) {
+            get_post_args username password
+            if(! ~ $"username '' && ! ~ $"password '')
+                auth_user $username $password
+        }
+        if not if(! ~ `{get_cookie id} '')
+            auth_user `{get_cookie id}
+    }
+    if not status=()
+}
+
+fn auth_user {
+    if(~ $#* 2) {
+        username=$1
+        password=$2
+        _status=()
+
+        if(! test -s etc/users/$username/password ||
+           ! ~ `{checkhash `{cat etc/users/$username/password} $password} true) {
+            _status='Wrong username or password.'
+            dprint Failed login to $username from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+        }
+        if not {
+            sessionid=`{genid 32}
+            if(~ $sessionid -1) {
+                _status='Session creation failed.'
+                dprint $_status
+            }
+            if not {
+                echo $sessionid > etc/users/$username/session
+                mkdir etc/sessions/$sessionid
+                echo $username > etc/sessions/$sessionid/name
+                date -nu | awk '{ print ($1 + 1800) }' > etc/sessions/$sessionid/expiry
+                date -nu | awk '{ print ($1 + 86400) }' > etc/sessions/$sessionid/expiryabs
+                logged_user=$username
+                dprint $logged_user logged in from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+
+                if(~ `{echo $QUERY_STRING | awk '{ print ($1 ~ /^redirect=\/discord\/[0-9]*$/) }'} 1 ||
+                   ~ `{echo $QUERY_STRING | awk '{ print ($1 ~ /^redirect=\/user\/[a-zA-Z0-9_]*$/) }'} 1 ||
+                   ~ $QUERY_STRING 'redirect=/random' ||
+                   ~ $QUERY_STRING 'redirect=/matches' ||
+                   ~ $QUERY_STRING 'redirect=/edit' ||
+                   ~ $QUERY_STRING 'redirect=/settings') 
+                    extraHeaders=($"extraHeaders '<meta http-equiv="refresh" content="0; url='`{echo $base_url$QUERY_STRING | sed 's/redirect=//'}^'" />')
+                if not
+                    extraHeaders=($"extraHeaders '<meta http-equiv="refresh" content="0; url='$base_url/user/$logged_user'" />')
+            }
+        }
+    }
+    if not if(~ $#* 1) {
+        sdir=etc/sessions/$1
+        if(! test -d $sdir ||
+           ~ `{awk '{ print ($1 < '`{date -nu}^') }' < $sdir/expiry} ||
+           ~ `{awk '{ print ($1 < '`{date -nu}^') }' < $sdir/expiryabs})
+            _status='Session expired.'
+        if not {
+            date -nu | awk '{ print ($1 + 1800) }' > etc/sessions/$1/expiry
+            logged_user=`{cat etc/sessions/$1/name}
+        }
+    }
+
+    if(~ $"logged_user '') logout_user
+    notify_errors=$_status
+    status=$_status
+}
+
+fn user_controls {
+    echo User: $"logged_user
+}
+
+
+# .md '(meta-)data' extract
+fn get_md_file_attr {
+    sed -n '/^\* '$2': /p; /^\* '$2': /q; /^$/q' < $1
+}
+
+
+# File title extraction
+fn get_md_title {
+    #sed 's/^(................................................................[^ ]*).*$/\1/g; 1q' < $1 
+    sed -n -e '1N; /^.*\n===*$/N; /.*\n===*\n *$/!b' -e 's/\n==*\n//p' < $1
+}
+
+fn get_html_title {
+    t=`{sed -n '32q; s/^.*<[Tt][Ii][Tt][Ll][Ee]> *([^<]+) *(<\/[Tt][Ii][Tt][Ll][Ee]>.*)?$/\1/p' < $1}
+
+    # As a backup we might want to pick the first 'non-tag' text in the file with:
+    if(~ $"t '')
+        t=`{sed -n -e 's/^(<[^>]+>)*([^<]+).*/\2/p; 32q' < $1 | sed 1q}
+
+    echo $t
+}
+
+fn get_file_title {
+    if (~ $1 *.md)
+        get_md_title $1
+    if not if(~ $1 *.html)
+        get_html_title $1
+    if not if(~ $1 */) {
+        if(test -f $1/index.md)
+            get_md_title $1/index.md
+        if not if(test -f $1/index.html)
+            get_html_title $1/index.html
+    }
+}
+
+fn datei { datet | sed 's/T.*$//' }
+
+fn datet {
+	date=`{read}
+	switch($date(2)){
+	case Jan;	mo=01
+	case Feb;	mo=02
+	case Mar;	mo=03
+	case Apr;	mo=04
+	case May;	mo=05
+	case Jun;	mo=06
+	case Jul;	mo=07
+	case Aug;	mo=08
+	case Sep;	mo=09
+	case Oct;	mo=10
+	case Nov;	mo=11
+	case Dec;	mo=12
+	}
+	switch($date(3)){
+	case [0-9]
+		da=0^$date(3)
+	case *
+		da=$date(3)
+	}
+	switch($date(5)){
+	case A;	tz=+0100
+	case ADT;	tz=-0300
+	case AFT;	tz=+430
+	case AKDT;	tz=-0800
+	case AKST;	tz=-0900
+	case ALMT;	tz=+0600
+	case AMST;	tz=-0300
+	case AMT;	tz=-0400
+	case ANAST;	tz=+1200
+	case ANAT;	tz=+1200
+	case AQTT;	tz=+0500
+	case ART;	tz=-0300
+	case AST;	tz=-0400
+	case AZOST;	tz=+0000
+	case AZOT;	tz=-0100
+	case AZST;	tz=+0500
+	case AZT;	tz=+0400
+	case B;	tz=+0200
+	case BNT;	tz=+0800
+	case BOT;	tz=-0400
+	case BRST;	tz=-0200
+	case BRT;	tz=-0300
+	case BST;	tz=+0100
+	case BTT;	tz=+0600
+	case C;	tz=+0300
+	case CAST;	tz=+0800
+	case CAT;	tz=+0200
+	case CCT;	tz=+0630
+	case CDT;	tz=-0500
+	case CEST;	tz=+0200
+	case CET;	tz=+0100
+	case CHADT;	tz=+1345
+	case CHAST;	tz=+1245
+	case CKT;	tz=-1000
+	case CLST;	tz=-0300
+	case CLT;	tz=-0400
+	case COT;	tz=-0500
+	case CST;	tz=-0600
+	case CVT;	tz=-0100
+	case CXT;	tz=+0700
+	case ChST;	tz=+1000
+	case D;	tz=+0400
+	case DAVT;	tz=+0700
+	case E;	tz=+0500
+	case EASST;	tz=-0500
+	case EAST;	tz=-0600
+	case EAT;	tz=+0300
+	case ECT;	tz=-0500
+	case EDT;	tz=-0400
+	case EEST;	tz=+0300
+	case EET;	tz=+0200
+	case EGST;	tz=+0000
+	case EGT;	tz=-0100
+	case EST;	tz=-0500
+	case ET;	tz=-0500
+	case F;	tz=+0600
+	case FJST;	tz=+1300
+	case FJT;	tz=+1200
+	case FKST;	tz=-0300
+	case FKT;	tz=-0400
+	case FNT;	tz=-0200
+	case G;	tz=+0700
+	case GALT;	tz=-0600
+	case GAMT;	tz=-0900
+	case GET;	tz=+0400
+	case GFT;	tz=-0300
+	case GILT;	tz=+1200
+	case GMT;	tz=+0000
+	case GST;	tz=+0400
+	case GYT;	tz=-0400
+	case H;	tz=+0800
+	case HAA;	tz=-0300
+	case HAC;	tz=-0500
+	case HADT;	tz=-0900
+	case HAE;	tz=-0400
+	case HAP;	tz=-0700
+	case HAR;	tz=-0600
+	case HAST;	tz=-1000
+	case HAT;	tz=-0230
+	case HAY;	tz=-0800
+	case HKT;	tz=+0800
+	case HLV;	tz=-0430
+	case HNA;	tz=-0400
+	case HNC;	tz=-0600
+	case HNE;	tz=-0500
+	case HNP;	tz=-0800
+	case HNR;	tz=-0700
+	case HNT;	tz=-0330
+	case HNY;	tz=-0900
+	case HOVT;	tz=+0700
+	case I;	tz=+0900
+	case ICT;	tz=+0700
+	case IDT;	tz=+0300
+	case IOT;	tz=+0600
+	case IRDT;	tz=+0430
+	case IRKST;	tz=+0900
+	case IRKT;	tz=+0800
+	case IRST;	tz=+0330
+	case IST;	tz=+0200
+	case JST;	tz=+0900
+	case K;	tz=+1000
+	case KGT;	tz=+0600
+	case KRAST;	tz=+0800
+	case KRAT;	tz=+0700
+	case KST;	tz=+0900
+	case KUYT;	tz=+0400
+	case L;	tz=+1100
+	case LHDT;	tz=+1100
+	case LHST;	tz=+1030
+	case LINT;	tz=+1400
+	case M;	tz=+1200
+	case MAGST;	tz=+1200
+	case MAGT;	tz=+1100
+	case MART;	tz=-0930
+	case MAWT;	tz=+0500
+	case MDT;	tz=-0600
+	case MHT;	tz=+1200
+	case MMT;	tz=+0630
+	case MSD;	tz=+0400
+	case MSK;	tz=+0300
+	case MST;	tz=-0700
+	case MUT;	tz=+0400
+	case MVT;	tz=+0500
+	case MYT;	tz=+0800
+	case N;	tz=-0100
+	case NCT;	tz=+1100
+	case NDT;	tz=-0230
+	case NFT;	tz=+1130
+	case NOVST;	tz=+0700
+	case NOVT;	tz=+0600
+	case NPT;	tz=+0545
+	case NST;	tz=-0330
+	case NUT;	tz=-1100
+	case NZDT;	tz=+1300
+	case NZST;	tz=+1200
+	case O;	tz=-0200
+	case OMSST;	tz=+0700
+	case OMST;	tz=+0600
+	case P;	tz=-0300
+	case PDT;	tz=-0700
+	case PET;	tz=-0500
+	case PETST;	tz=+1200
+	case PETT;	tz=+1200
+	case PGT;	tz=+1000
+	case PHOT;	tz=+1300
+	case PHT;	tz=+0800
+	case PKT;	tz=+0500
+	case PMDT;	tz=-0200
+	case PMST;	tz=-0300
+	case PONT;	tz=+1100
+	case PST;	tz=-0800
+	case PT;	tz=-0800
+	case PWT;	tz=+0900
+	case PYST;	tz=-0300
+	case PYT;	tz=-0400
+	case Q;	tz=-0400
+	case R;	tz=-0500
+	case RET;	tz=+0400
+	case S;	tz=-0600
+	case SAMT;	tz=+0400
+	case SAST;	tz=+0200
+	case SBT;	tz=+1100
+	case SCT;	tz=+0400
+	case SGT;	tz=+0800
+	case SRT;	tz=-0300
+	case SST;	tz=-1100
+	case T;	tz=-0700
+	case TAHT;	tz=-1000
+	case TFT;	tz=+0500
+	case TJT;	tz=+0500
+	case TKT;	tz=-1000
+	case TLT;	tz=+0900
+	case TMT;	tz=+0500
+	case TVT;	tz=+1200
+	case U;	tz=-0800
+	case ULAT;	tz=+0800
+	case UYST;	tz=-0200
+	case UYT;	tz=-0300
+	case UZT;	tz=+0500
+	case V;	tz=-0900
+	case VET;	tz=-0430
+	case VLAST;	tz=+1100
+	case VLAT;	tz=+1000
+	case VUT;	tz=+1100
+	case W;	tz=-1000
+	case WAST;	tz=+0200
+	case WAT;	tz=+0100
+	case WDT;	tz=+0900
+	case WEST;	tz=+0100
+	case WET;	tz=+0000
+	case WFT;	tz=+1200
+	case WGST;	tz=-0200
+	case WGT;	tz=-0300
+	case WIB;	tz=+0700
+	case WIT;	tz=+0900
+	case WITA;	tz=+0800
+	case WST;	tz=+0800
+	case WT;	tz=+0000
+	case X;	tz=-1100
+	case Y;	tz=-1200
+	case YAKST;	tz=+1000
+	case YAKT;	tz=+0900
+	case YAPT;	tz=+1000
+	case YEKST;	tz=+0600
+	case YEKT;	tz=+0500
+	case Z;	tz=+0000
+	}
+	echo $date(6)^-$mo-$da^T^$date(4)^$tz
+}
+
+fn yyyymmdd {
+    echo $* | sed 's/....(...).(..)..............(....)/\3\1\2/; s/Jan/01/; s/Feb/02/; s/Mar/03/; s/Apr/04/; s/May/05/; s/Jun/06/; s/Jul/07/; s/Aug/08/; s/Sep/09/; s/Oct/10/; s/Nov/11/; s/Dec/12/; s/ /0/'
+}
+
+##########################################################################
+##########################################################################
+#app_blog_methods = ( _post index.rss )
+#fn app_blog__post {
+#    echo
+#}
+#
+#app_blog___default {
+#    if (~ $blog)
+#    call_app blogpost
+#}
+#
+## --
+#app_blogpost_methods = ( comment  _edit )
+#
+#fn app_blogpost_comment {
+#    call_app comments
+#}
+#
+## --
+#app_comments_methods = ( _post _edit )
+#
+#fn app_comments___default {
+#
+#}

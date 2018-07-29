@@ -1,0 +1,39 @@
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Lobster Two", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+main {
+    flex: 1;
+    padding: 64px 15% 20px 15%;
+}
+@media only screen and (min-width: 992px) {
+    main {
+        padding: 64px 200px 20px 200px;
+    }
+}
+
+#ad-left, #ad-right {
+    position: fixed;
+    top: 84px;
+    left: 20px;
+}
+#ad-right {
+    right: 20px;
+}
+
+#bio ul {
+    padding: initial;
+    border: none;
+}
+#bio li {
+    background-color: initial;
+    line-height: initial;
+    padding: initial;
+    margin: 0 0 0 1em;
+    border: none;
+    list-style: initial;
+}
+
+.nsfw {
+    background-color: #ffe5ed !important;
+}

@@ -1,0 +1,32 @@
+main {
+    background-color: #303030;
+    color: #fff;
+}
+
+main a, input, textarea {
+    color: #fff;
+}
+
+ul {
+    border-color: #424242;
+}
+li {
+    background-color: #303030;
+    color: #fff;
+    border-bottom-color: #424242;
+}
+li:last-child {
+    border-bottom: none;
+}
+li span, [type="checkbox"]:not(.unstyled) + label {
+    color: rgba(255, 255, 255, 0.6);
+    background-color: #424242;
+}
+[type="checkbox"]:not(.unstyled):checked + label {
+    background-color: #b3fff7;
+    color: #000;
+}
+
+.card {
+    background-color: #424242;
+}

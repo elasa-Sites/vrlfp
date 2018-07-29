@@ -33,7 +33,10 @@ Requirements:
 * An http server that can handle CGIs
 * plan9port
 * Golang
-* mail(1) configured to send (for user account verification)
+* tidy
+* sendmail(1) configured to send
+* Docker (to sandbox GraphicsMagick for thumbnail generation)
+* sudo with the following rule: <kwerc's user> ALL=(ALL) NOPASSWD: /var/www/kwerc/bin/genthumb.rc
 
 Instructions:
 
@@ -51,6 +54,20 @@ cgi will run as, usually www-data, for example by doing: chown -R :www-data
 sites/; chmod -R g+w sites/
 
 Run ./INSTALL to build the Golang Markdown parser and security programs.
+
+Upgrade GraphicsMagick:
+
+    docker pull rafakato/alpine-graphicsmagick
+    docker run -i -t --name gm rafakato/alpine-graphicsmagick /bin/bash
+    docker start gm
+    docker attach gm
+    https://wiki.alpinelinux.org/wiki/Upgrading_Alpine#Upgrading_to_latest_release
+    apk add graphicsmagick
+    exit
+    docker commit gm rafakato/alpine-graphicsmagick
+
+Subscribe to [graphicsmagick-announce](https://lists.sourceforge.net/lists/listinfo/graphicsmagick-announce)
+and repeat these steps for security updates.
 
 For general configuration options copy etc/initrc to etc/initrc.local and
 customize it as needed. Site (and directory) specific options can be set in a

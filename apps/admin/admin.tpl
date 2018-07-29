@@ -2,27 +2,28 @@
 
 % notices_handler
 
-<form action="" method="POST">
-    <input type="text" name="admin_delete" id="admin_delete">
-    <label for="admin_delete">Username</label>
-    <p><button type="submit" name="admin_submit_delete" value="yes">Delete account</button></p>
+<form name="prompt" method="POST">
+<input type="text" name="command" value="%($"post_arg_command%)">
+<p><button type="submit">Run</button></p>
 </form>
 
-<a href="/debug" class="btn">Debug</a>
-
-<h2>Users</h2>
-% for(user in etc/users/*) {
-<p>
-    <a href="/user/%(`{basename $user}%)">%(`{basename $user}%)</a><br />
 %{
-      for(file in `{ls $user | grep -v password | grep -v session}) {
-          echo '<em>'
-          basename $file
-          echo '</em><br />'
-          escape_html < $file
-          echo '<br />'
-      }
+fn evl {
+    # Buffering is probably messing this up:
+    #rc -c 'flag x +;{'^$post_arg_command'} |[2] awk ''{print ">> "$0}'''
+    rc -c 'flag s +; flag x +;'^$post_arg_command
+}
+    if(! ~ $#post_arg_command 0 && ! ~ $#post_arg_command '') {
+        echo '<hr><pre>'
+        evl | escape_html |[2] awk '{print "<b>"$0"</b>"}' 
+        echo '</pre>'
+    }
 %}
-</p>
-% }
-</ul>
+
+<h2>Debug</h2>
+
+<hr><pre>
+% env | escape_html
+</pre><hr>
+
+% umask

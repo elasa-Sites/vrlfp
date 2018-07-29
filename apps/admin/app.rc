@@ -5,9 +5,7 @@ fn conf_enable_admin {
 fn admin_init {
     if(~ $req_path /admin && check_user admin) {
         handler_body_main=(tpl_handler `{get_lib_file admin/admin.tpl apps/admin/admin.tpl})
-
-        if(~ $"post_arg_admin_submit_delete yes && ! ~ $"post_arg_admin_delete '')
-            rm -r etc/users/$post_arg_admin_delete etc/unconfirmed/$post_arg_admin_delete
+        ll_add handlers_body_head template apps/admin/mod.tpl
     }
 
     if not if(~ $req_path /admin && check_user mod) {

@@ -610,12 +610,11 @@ fn users_init {
 
 fn validate_new_user {
     user=$1; pass=$2; pass2=$3; email=$4; dob=$5; tos=$6
-    userlower=`{echo $user | tr 'A-Z' 'a-z'}
     _status=()
 
     if(~ $"user '' || ! echo $user | sed 1q | grep -s '^'$allowed_user_chars'+$')
         _status='Missing or invalid username. Allowed characters: A to Z, a to z, 0 to 9, _'
-    if not if(test -d etc/users/$userlower || test -d etc/unconfirmed/$userlower || test -d etc/deactivated/$userlower || test -d etc/banned/$userlower)
+    if not if(ls -p etc/users etc/unconfirmed etc/deactivated etc/banned | grep -qi '^'$user'$')
         _status='Username '''^$user^''' already taken. Please choose a different one.'
 
     if(! ~ $"user '')

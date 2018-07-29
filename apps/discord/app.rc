@@ -1,0 +1,277 @@
+fn conf_enable_discord {
+    conf_enable_app discord
+}
+
+fn discord_init {
+    if(~ $req_path /discord/* && ~ `{basename $req_path | awk '{ print $1 ~ /^[0-9]+$/ }'} 1) {
+        handler_body_main=(tpl_handler `{get_lib_file discord/discord.tpl apps/discord/discord.tpl})
+
+        if(check_user) {
+            did=`{basename $req_path}
+            dir=etc/users/$logged_user
+            dprint `{cat $dir/discordauth} $did
+            if(~ `{cat $dir/discordauth} $did) {
+                echo $did > $dir/discordid
+                echo nick $did $logged_user >> etc/roles
+                discord_roles $did $dir
+                notify_success='Success! Check your Discord roles and message @Administrator if they''re missing. They will take up to a minute to sync.'
+            }
+            if not
+                notify_error='Authentication failed. Did you give kotori the right username?'
+        }
+    }
+}
+
+fn discord_roles {
+    did=$1; dir=$2
+    touch etc/roles
+    chmod g+w etc/roles
+
+    echo -n role $did 455448415258804235 >> /var/www/kwerc/etc/roles
+
+    if(test -f $dir/admin)
+        echo -n ' 458465845887369243' >> /var/www/kwerc/etc/roles
+    if(test -f $dir/dev)
+        echo -n ' 466292757971861505' >> /var/www/kwerc/etc/roles
+    if(test -f $dir/headmod)
+        echo -n ' 465585767541112853' >> /var/www/kwerc/etc/roles
+    if(test -f $dir/mod)
+        echo -n ' 455220387287007233' >> /var/www/kwerc/etc/roles
+    if(test -f $dir/creator)
+        echo -n ' 466813366028206081' >> /var/www/kwerc/etc/roles
+    if(test -f $dir/dayone)
+        echo -n ' 455290613928165377' >> /var/www/kwerc/etc/roles
+
+    if(grep -s '^Ageplayer$' $dir/kinks)
+        echo -n ' 458790345984180224' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Boy_or_Girl$' $dir/kinks)
+        echo -n ' 458790421745631253' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Brat$' $dir/kinks)
+        echo -n ' 458790481170661396' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Brat_Tamer$' $dir/kinks)
+        echo -n ' 458790502523994132' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Daddy_or_Mommy$' $dir/kinks)
+        echo -n ' 458790451525320704' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Degradee$' $dir/kinks)
+        echo -n ' 458790529384054807' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Degrader$' $dir/kinks)
+        echo -n ' 458790557008003102' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Exhibitionist$' $dir/kinks)
+        echo -n ' 458790586011353108' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Experimentalist$' $dir/kinks)
+        echo -n ' 458790621046636545' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Masochist$' $dir/kinks)
+        echo -n ' 458790658531131394' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Master_or_Mistress$' $dir/kinks)
+        echo -n ' 458790709378547712' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Owner$' $dir/kinks)
+        echo -n ' 458790809542852608' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Pet$' $dir/kinks)
+        echo -n ' 458790846540808192' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Hunter$' $dir/kinks)
+        echo -n ' 458790882045591552' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Prey$' $dir/kinks)
+        echo -n ' 458790923350835200' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Rigger$' $dir/kinks)
+        echo -n ' 458790949292605440' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Rope_Bunny$' $dir/kinks)
+        echo -n ' 458790981928747008' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sadist$' $dir/kinks)
+        echo -n ' 458790687920357379' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Slave$' $dir/kinks)
+        echo -n ' 455458271994576917' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Voyeur$' $dir/kinks)
+        echo -n ' 458791012542971905' >> /var/www/kwerc/etc/roles
+    if(grep -s '^360_VR$' $dir/vr)
+        echo -n ' 461041628799303680' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Full_Body_VR$' $dir/vr)
+        echo -n ' 461041683908263947' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Mobile_VR$' $dir/vr)
+        echo -n ' 461041335994941440' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Roomscale_VR$' $dir/vr)
+        echo -n ' 461041658033733642' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Standing_VR$' $dir/vr)
+        echo -n ' 461041592145281024' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Aromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027573938520074' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Aromantic___VR$' $dir/sexuality)
+        echo -n ' 461027369793093644' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Asexual___IRL$' $dir/sexuality)
+        echo -n ' 458792968242069505' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Asexual___VR$' $dir/sexuality)
+        echo -n ' 458795132196749322' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Biromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027545718980628' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Biromantic___VR$' $dir/sexuality)
+        echo -n ' 461027347605487616' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Bisexual___IRL$' $dir/sexuality)
+        echo -n ' 461025441298251776' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Bisexual___VR$' $dir/sexuality)
+        echo -n ' 458792935140360204' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Demiromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027633124343848' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Demiromantic___VR$' $dir/sexuality)
+        echo -n ' 461027392387809290' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Demisexual___IRL$' $dir/sexuality)
+        echo -n ' 461025592289132554' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Demisexual___VR$' $dir/sexuality)
+        echo -n ' 458792995647520775' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Gay___IRL$' $dir/sexuality)
+        echo -n ' 461025415973044234' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Gay___VR$' $dir/sexuality)
+        echo -n ' 458792899824582666' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Heteroflexible___IRL$' $dir/sexuality)
+        echo -n ' 461025619820412930' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Heteroflexible___VR$' $dir/sexuality)
+        echo -n ' 458793036491522059' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Heteroromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027489196539904' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Heteroromantic___VR$' $dir/sexuality)
+        echo -n ' 461026876190621708' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Homoflexible___IRL$' $dir/sexuality)
+        echo -n ' 461025660266086430' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Homoflexible___VR$' $dir/sexuality)
+        echo -n ' 458793068804702209' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Homoromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027520117211137' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Homoromantic___VR$' $dir/sexuality)
+        echo -n ' 461027323458617356' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Lesbian___IRL$' $dir/sexuality)
+        echo -n ' 461025697549385749' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Lesbian___VR$' $dir/sexuality)
+        echo -n ' 458793102476312598' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Panromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027662308179968' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Panromantic___VR$' $dir/sexuality)
+        echo -n ' 461027413787279361' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Pansexual___IRL$' $dir/sexuality)
+        echo -n ' 461025724946448407' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Pansexual___VR$' $dir/sexuality)
+        echo -n ' 458793139264815116' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Queer___IRL$' $dir/sexuality)
+        echo -n ' 461025754424279040' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Queer___VR$' $dir/sexuality)
+        echo -n ' 458793168138141696' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Questioning___IRL$' $dir/sexuality)
+        echo -n ' 461025777190961152' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Questioning___VR$' $dir/sexuality)
+        echo -n ' 458793190116294667' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sapioromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027692129550367' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sapioromantic___VR$' $dir/sexuality)
+        echo -n ' 461027434083516433' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sapiosexual___IRL$' $dir/sexuality)
+        echo -n ' 461025803786780694' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sapiosexual___VR$' $dir/sexuality)
+        echo -n ' 458793220135059477' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Straight___IRL$' $dir/sexuality)
+        echo -n ' 461025380585701376' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Straight___VR$' $dir/sexuality)
+        echo -n ' 458792799069011988' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trapromantic___IRL$' $dir/sexuality)
+        echo -n ' 461027722748231710' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trapromantic___VR$' $dir/sexuality)
+        echo -n ' 461027462864961558' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trapromantic$' $dir/sexuality)
+        echo -n ' 461028113804165140' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trapsexual___IRL$' $dir/sexuality)
+        echo -n ' 458793246479351808' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trapsexual___VR$' $dir/sexuality)
+        echo -n ' 458793347897753601' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Mutesexual$' $dir/sexuality)
+        echo -n ' 458793380256808970' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Homiesexual$' $dir/sexuality)
+        echo -n ' 466975084482002946' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Married$' $dir/status)
+        echo -n ' 458790306197012521' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Seeing_Someone$' $dir/status)
+        echo -n ' 458790280188133397' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Single$' $dir/status)
+        echo -n ' 458789773302169612' >> /var/www/kwerc/etc/roles
+    if(grep -s '^AltspaceVR$' $dir/games)
+        echo -n ' 460119559714635788' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Facebook_Spaces$' $dir/games)
+        echo -n ' 460120153129091082' >> /var/www/kwerc/etc/roles
+    if(grep -s '^High_Fidelity$' $dir/games)
+        echo -n ' 460120407778000898' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Rec_Room$' $dir/games)
+        echo -n ' 460119433113894912' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Sansar$' $dir/games)
+        echo -n ' 460120197051711489' >> /var/www/kwerc/etc/roles
+    if(grep -s '^TheWaveVR$' $dir/games)
+        echo -n ' 460119526583828496' >> /var/www/kwerc/etc/roles
+    if(grep -s '^VRChat$' $dir/games)
+        echo -n ' 460118756585373697' >> /var/www/kwerc/etc/roles
+    if(grep -s '^vTime$' $dir/games)
+        echo -n ' 460120092269740083' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Monogamous$' $dir/type)
+        echo -n ' 458786873138085919' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Polygamous$' $dir/type)
+        echo -n ' 458789442761523210' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Agender$' $dir/gender)
+        echo -n ' 458793544207826976' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Androgynous$' $dir/gender)
+        echo -n ' 458793574050430987' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Bigender$' $dir/gender)
+        echo -n ' 458793609416802304' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Cis_Man$' $dir/gender)
+        echo -n ' 458793637028036608' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Cis_Woman$' $dir/gender)
+        echo -n ' 458793677414858772' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Gender_Nonconforming$' $dir/gender)
+        echo -n ' 458793765176475668' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Genderfluid$' $dir/gender)
+        echo -n ' 458793702899580948' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Genderqueer$' $dir/gender)
+        echo -n ' 458793734222381057' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Hijra$' $dir/gender)
+        echo -n ' 458793799368310796' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Intersex$' $dir/gender)
+        echo -n ' 458793823556993044' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Man$' $dir/gender)
+        echo -n ' 458793511341260831' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Nonbinary$' $dir/gender)
+        echo -n ' 458793851130347520' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Other_Gender$' $dir/gender)
+        echo -n ' 458793882512130073' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Pangender$' $dir/gender)
+        echo -n ' 458793910437675029' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trans_Man$' $dir/gender)
+        echo -n ' 458794029082083328' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Trans_Woman$' $dir/gender)
+        echo -n ' 458794055284031510' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Transfeminine$' $dir/gender)
+        echo -n ' 458793932294324234' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Transmasculine$' $dir/gender)
+        echo -n ' 458793967534866452' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Transsexual$' $dir/gender)
+        echo -n ' 458793999503851520' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Two_Spirit$' $dir/gender)
+        echo -n ' 458794080470564864' >> /var/www/kwerc/etc/roles
+    if(grep -s '^VR_Trap$' $dir/gender)
+        echo -n ' 463643907587178496' >> /var/www/kwerc/etc/roles
+    if(grep -s '^IRL_Trap$' $dir/gender)
+        echo -n ' 466975299473506314' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Woman$' $dir/gender)
+        echo -n ' 458793488444555274' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Mute$' $dir/mute)
+        echo -n ' 463815968049594378' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Selective_Mute$' $dir/mute)
+        echo -n ' 463816063189254145' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Dominant$' $dir/role)
+        echo -n ' 455290305781170178' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Submissive$' $dir/role)
+        echo -n ' 455290533099732993' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Switch$' $dir/role)
+        echo -n ' 455444868550885386' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Looking_For_Date$' $dir/lookingfor)
+        echo -n ' 458791160366759957' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Looking_For_Hookup$' $dir/lookingfor)
+        echo -n ' 458792097965670400' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Looking_For_Homie$' $dir/lookingfor)
+        echo -n ' 458792483787243531' >> /var/www/kwerc/etc/roles
+    if(grep -s '^Roleplaying$' $dir/lookingfor)
+        echo -n ' 461023499939479552' >> /var/www/kwerc/etc/roles
+
+    echo >> /var/www/kwerc/etc/roles
+}

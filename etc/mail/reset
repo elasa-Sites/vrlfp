@@ -1,0 +1,7 @@
+Subject: Password reset request for $siteTitle
+
+Please click on the following link to reset your $siteTitle password:
+
+  $resetLink
+
+If you did not initiate this request, please contact $replyTo.

@@ -5,27 +5,59 @@
 % if(check_user) {
 %     dir=etc/users/$logged_user
 
-<p><a href="/user/%($logged_user%)" class="btn">Back to profile</a></p>
+<p><a href="/user/%($logged_user%)" class="btn">Back to profile</a></p><br />
+
+<form action="" method="POST" enctype="multipart/form-data">
+    <h5>Add picture</h5>
+% if(! check_user premium) {
+    <p>Free users are limited to four SFW profile pictures and one NSFW picture. <a href="/premium">Upgrade to VRLFP Premium</a>.</p>
+% }
+    <input type="file" name="users_picture" accept="image/*">
+    <p>
+        <input type="checkbox" name="users_picture_nsfw" id="picture_nsfw" value="yes">
+        <label for="picture_nsfw">NSFW?</label>
+    </p>
+    <p><button type="submit" name="users_submit_picture" value="yes">Submit</button></p><br />
+</form>
+
+<h5>Remove picture</h5>
+<p>Click on a picture below to remove it from your profile.</p>
+% for(pic in `{ls -p $sitedir/img/users/$logged_user | sort -n}) {
+<form action="" method="POST" style="display: inline">
+    <input type="hidden" name="users_picture_delete" value="%($pic%)">
+    <input type="image" class="card unstyled" width="150" src="/img/users/%($logged_user%)/%($pic%)">
+</form>
+% }
+% for(pic in `{ls -p $sitedir/img/users/nsfw/$logged_user | sort -n}) {
+<form action="" method="POST" style="display: inline">
+    <input type="hidden" name="users_picture_delete_nsfw" value="%($pic%)">
+    <input type="image" class="card unstyled" width="150" src="/img/users/nsfw/%($logged_user%)/%($pic%)">
+</form>
+% }
+<br /><br />
 
 <form action="" method="POST">
-    <input type="text" name="users_age" id="age" min="18" value="%(`{if(test -s $dir/age) cat $dir/age}%)">
-    <label for="age">Age</label>
+    <h5>Profile info</h5>
+% if(! test -f $dir/dob) {
+    <input type="date" name="users_dob" id="dob" required="" placeholder="YYYY-MM-DD">
+    <label for="dob">Date of birth (only your age will be public)</label>
+% }
 
-    <input type="text" name="users_location" id="location" value="%(`{if(test -s $dir/location) cat $dir/location}%)">
+    <input type="text" name="users_location" id="location" value="%(`{if(test -s $dir/location) escape_html < $dir/location}%)">
     <label for="location">Location</label>
 
     <br /><br /><h6>Contact info (shared with matches)</h6>
-    <input type="text" name="users_vrc" id="vrc" value="%(`{if(test -s $dir/vrc) cat $dir/vrc}%)" style="margin-top: 0">
+    <input type="text" name="users_vrc" id="vrc" value="%(`{if(test -s $dir/vrc) escape_html < $dir/vrc}%)" style="margin-top: 0">
     <label for="vrc">VRChat</label>
-    <input type="text" name="users_discord" id="discord" value="%(`{if(test -s $dir/discord) cat $dir/discord}%)">
+    <input type="text" name="users_discord" id="discord" value="%(`{if(test -s $dir/discord) escape_html < $dir/discord}%)">
     <label for="discord">Discord</label>
-    <input type="text" name="users_sc" id="sc" value="%(`{if(test -s $dir/sc) cat $dir/sc}%)">
+    <input type="text" name="users_sc" id="sc" value="%(`{if(test -s $dir/sc) escape_html < $dir/sc}%)">
     <label for="sc">Snapchat</label>
-    <input type="text" name="users_ig" id="ig" value="%(`{if(test -s $dir/ig) cat $dir/ig}%)">
+    <input type="text" name="users_ig" id="ig" value="%(`{if(test -s $dir/ig) escape_html < $dir/ig}%)">
     <label for="ig">Instagram</label>
-    <input type="text" name="users_pubemail" id="pubemail" value="%(`{if(test -s $dir/pubemail) cat $dir/pubemail}%)">
+    <input type="text" name="users_pubemail" id="pubemail" value="%(`{if(test -s $dir/pubemail) escape_html < $dir/pubemail}%)">
     <label for="pubemail">Email (separate from your account email)</label>
-    <input type="text" name="users_phone" id="phone" value="%(`{if(test -s $dir/phone) cat $dir/phone}%)">
+    <input type="text" name="users_phone" id="phone" value="%(`{if(test -s $dir/phone) escape_html < $dir/phone}%)">
     <label for="phone">Phone</label>
 
     <br /><br /><p>
@@ -53,8 +85,8 @@
         <label for="gender_hijra">Hijra</label>
         <input type="checkbox" name="users_gender_Intersex" id="gender_intersex" value="yes" %(`{if(test -s $dir/gender && grep -s '^Intersex$' $dir/gender) echo 'checked="yes"'}%)>
         <label for="gender_intersex">Intersex</label>
-        <input type="checkbox" name="users_gender_Nonbinary" id="gender_non-binary" value="yes" %(`{if(test -s $dir/gender && grep -s '^Nonbinary$' $dir/gender) echo 'checked="yes"'}%)>
-        <label for="gender_non-binary">Nonbinary</label>
+        <input type="checkbox" name="users_gender_Nonbinary" id="gender_nonbinary" value="yes" %(`{if(test -s $dir/gender && grep -s '^Nonbinary$' $dir/gender) echo 'checked="yes"'}%)>
+        <label for="gender_nonbinary">Nonbinary</label>
         <input type="checkbox" name="users_gender_Other_Gender" id="gender_other_gender" value="yes" %(`{if(test -s $dir/gender && grep -s '^Other_Gender$' $dir/gender) echo 'checked="yes"'}%)>
         <label for="gender_other_gender">Other Gender</label>
         <input type="checkbox" name="users_gender_Pangender" id="gender_pangender" value="yes" %(`{if(test -s $dir/gender && grep -s '^Pangender$' $dir/gender) echo 'checked="yes"'}%)>
@@ -71,22 +103,30 @@
         <label for="gender_trans_woman">Trans Woman</label>
         <input type="checkbox" name="users_gender_Two_Spirit" id="gender_two_spirit" value="yes" %(`{if(test -s $dir/gender && grep -s '^Two_Spirit$' $dir/gender) echo 'checked="yes"'}%)>
         <label for="gender_two_spirit">Two Spirit</label>
+        <input type="checkbox" name="users_gender_VR_Trap" id="gender_vr_trap" value="yes" %(`{if(test -s $dir/gender && grep -s '^VR_Trap$' $dir/gender) echo 'checked="yes"'}%)>
+        <label for="gender_vr_trap">VR Trap</label>
+        <input type="checkbox" name="users_gender_IRL_Trap" id="gender_irl_trap" value="yes" %(`{if(test -s $dir/gender && grep -s '^IRL_Trap$' $dir/gender) echo 'checked="yes"'}%)>
+        <label for="gender_irl_trap">IRL Trap</label>
         <br /><label>Gender</label>
     </p>
     <p>
-        <input type="checkbox" name="users_lookingfor_Looking_For_Date___VR_Only" id="datevr" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Date___VR_Only$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="datevr">Looking For Date - VR Only</label>
-        <input type="checkbox" name="users_lookingfor_Looking_For_Hookup___VR_Only" id="hookupvr" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Hookup___VR_Only$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="hookupvr">Looking For Hookup - VR Only</label>
-        <input type="checkbox" name="users_lookingfor_Looking_For_Date___VR_and_IRL" id="dateirl" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Date___VR_and_IRL$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="dateirl">Looking For Date - VR and IRL</label>
-        <input type="checkbox" name="users_lookingfor_Looking_For_Hookup___VR_and_IRL" id="hookupirl" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Hookup___VR_and_IRL$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="hookupirl">Looking For Hookup - VR and IRL</label>
-        <input type="checkbox" name="users_lookingfor_Looking_For_Serious_Relationship" id="serious" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Serious_Relationship$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="serious">Looking For Serious Relationship</label>
-        <input type="checkbox" name="users_lookingfor_Just_Roleplaying" id="roleplaying" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Just_Roleplaying$' $dir/lookingfor) echo 'checked="yes"'}%)>
-        <label for="roleplaying">Just Roleplaying</label>
+        <input type="checkbox" name="users_mute_Mute" id="mute_mute" value="yes" %(`{if(test -s $dir/mute && grep -s '^Mute$' $dir/mute) echo 'checked="yes"'}%)>
+        <label for="mute_mute">Mute</label>
+        <input type="checkbox" name="users_mute_Selective_Mute" id="mute_selective_mute" value="yes" %(`{if(test -s $dir/mute && grep -s '^Selective_Mute$' $dir/mute) echo 'checked="yes"'}%)>
+        <label for="mute_selective_mute">Selective Mute</label>
+        <br /><label>Do you speak in VR?</label>
+    </p>
+    <p>
+        <input type="checkbox" name="users_lookingfor_Looking_For_Date" id="date" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Date$' $dir/lookingfor) echo 'checked="yes"'}%)>
+        <label for="date">Looking For Date</label>
+        <input type="checkbox" name="users_lookingfor_Looking_For_Hookup" id="hookup" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Hookup$' $dir/lookingfor) echo 'checked="yes"'}%)>
+        <label for="hookup">Looking For Hookup</label>
+        <input type="checkbox" name="users_lookingfor_Looking_For_Homie" id="friend" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Looking_For_Homie$' $dir/lookingfor) echo 'checked="yes"'}%)>
+        <label for="friend">Looking For Homie</label>
+        <input type="checkbox" name="users_lookingfor_Roleplaying" id="roleplaying" value="yes" %(`{if(test -s $dir/lookingfor && grep -s '^Roleplaying$' $dir/lookingfor) echo 'checked="yes"'}%)>
+        <label for="roleplaying">Roleplaying</label>
         <br /><label>What are you looking for?</label>
+        <br /><label style="color: #cb838b">ACHTUNG! "Looking For Date" is for users with the end goal of a serious relationship that extends to real life. If you are looking for something strictly in VR, please select "Roleplaying".</label>
     </p>
     <p>
         <input type="checkbox" name="users_status_Single" id="Single" value="yes" %(`{if(test -s $dir/status && grep -s '^Single$' $dir/status) echo 'checked="yes"'}%)>
@@ -96,7 +136,6 @@
         <input type="checkbox" name="users_status_Married" id="Married" value="yes" %(`{if(test -s $dir/status && grep -s '^Married$' $dir/status) echo 'checked="yes"'}%)>
         <label for="Married">Married</label>
         <br /><label>Relationship Status</label>
-
     </p>
     <p>
         <input type="checkbox" name="users_type_Monogamous" id="Monogamous" value="yes" %(`{if(test -s $dir/type && grep -s '^Monogamous$' $dir/type) echo 'checked="yes"'}%)>
@@ -194,6 +233,8 @@
         <label for="Sapioromantic___IRL">Sapioromantic - IRL</label>
         <input type="checkbox" name="users_sexuality_Trapromantic___IRL" id="Trapromantic___IRL" value="yes" %(`{if(test -s $dir/sexuality && grep -s '^Trapromantic___IRL$' $dir/sexuality) echo 'checked="yes"'}%)>
         <label for="Trapromantic___IRL">Trapromantic - IRL</label>
+        <input type="checkbox" name="users_sexuality_Homieromantic" id="Homieromantic" value="yes" %(`{if(test -s $dir/sexuality && grep -s '^Homieromantic$' $dir/sexuality) echo 'checked="yes"'}%)>
+        <label for="Homieromantic">Homieromantic</label>
         <br/><label>Sexuality</label>
     </p>
     <p>
@@ -284,61 +325,18 @@
 % echo -n '    <textarea name="users_bio" id="bio">'
 % if(test -s $dir/bio) escape_html < $dir/bio
 </textarea>
-    <label for="bio">Bio (you can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown syntax</a> here)</label>
+    <label for="bio">Bio (<a href="/premium">VRLFP Premium</a> users can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown syntax</a> here)</label>
 
-    <input type="text" name="users_sketchfab" id="sketchfab" value="%(`{if(test -s $dir/sketchfab) cat $dir/sketchfab}%)">
+% if(check_user premium) {
+    <input type="text" name="users_sketchfab" id="sketchfab" value="%(`{if(test -s $dir/sketchfab) escape_html < $dir/sketchfab}%)">
     <label for="sketchfab">Sketchfab 3D model ID (upload your avatar <a href="https://sketchfab.com/" target="_blank">here</a> and copy the 32 character ID from your model URL)</label>
-
-    <p>
-        <input type="checkbox" name="users_nsfw" id="nsfw" value="yes" %(`{if(test -f $dir/nsfw) echo 'checked="yes"'}%)>
-        <label for="nsfw">Show NSFW profile images?</label>
-    </p>
+% }
+% if not
+    <p><a href="/premium">VRLFP Premium</a> users can embed a 3D model of their avatar on their profile.</p>
 
     <p><button type="submit" name="users_submit" value="yes">Submit</button></p><br />
 </form>
-
-<!--
-<form action="" method="POST">
-    <h5>Upload pictures</h5>
-    <input type="file" name="pictures" multiple accept="image/*">
-    <p><button type="submit" name="users_submit_pictures" value="yes">Submit</button></p><br />
-</form>
-
-<form action="" method="POST">
-    <h5>Change your email address</h5>
-    <input type="email" name="users_email" id="email" value="%(`{cat $dir/email}%)">
-    <label for="email">E-mail</label>
-
-    <input type="password" name="users_pass" id="pass">
-    <label for="pass">Confirm password</label>
-
-    <p><button type="submit" name="users_submit_email" value="yes">Submit</button></p><br />
-</form>
-
-<form action="" method="POST">
-    <h5>Reset your password</h5>
-    <input type="password" name="users_passold" id="passold">
-    <label for="pass">Current password</label>
-
-    <input type="password" name="users_pass" id="pass1">
-    <label for="pass1">New password</label>
-
-    <input type="password" name="users_pass2" id="pass2">
-    <label for="pass2">Repeat new password</label>
-
-    <p><button type="submit" name="users_submit_password" value="yes">Submit</button></p><br />
-</form>
-
-<form action="" method="POST">
-    <h5>Delete your account</h5>
-    <p>Be careful! This is permanent.</p>
-    <input type="password" name="users_pass" id="pass3">
-    <label for="pass3">Confirm password</label>
-
-    <p><button type="submit" name="users_submit_delete" value="yes">Delete</button></p><br />
-</form>
--->
 % }
 % if not {
-    <p><a href="/login" class="btn">Login</a></p>
+    <p><a href="/login?redirect=/edit" class="btn">Login</a></p>
 % }

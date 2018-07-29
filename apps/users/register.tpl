@@ -9,7 +9,10 @@
         <label for="user">Username</label>
     
         <input type="email" name="users_email" id="email" required="" value="%($"post_arg_users_email%)">
-        <label for="email">E-mail</label>
+        <label for="email">Email</label>
+
+        <input type="date" name="users_dob" id="dob" required="" value="%($"post_arg_users_dob%)" placeholder="YYYY-MM-DD">
+        <label for="dob">Date of birth (only your age will be public)</label>
     
         <input type="password" name="users_pass" id="pass" required="" value="">
         <label for="pass">Password</label>
@@ -18,7 +21,7 @@
         <label for="pass2">Repeat password</label>
 
         <br /><br /><input type="checkbox" name="users_tos" id="tos" value="yes" class="unstyled">
-        <label for="tos" style="color: inherit">I am at least 18 years of age and I agree to the <a href="/terms">Terms of Service</a></label>
+        <label for="tos" style="color: inherit">I agree to the <a href="/terms">Terms of Service</a> and the <a href="/privacy">Privacy Policy</a>.</label>
     
         <p><button type="submit" name="users_submit">Submit</button></p>
     </form><br />

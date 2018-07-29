@@ -4,5 +4,5 @@
 <a href="/matches" class="btn">Check out your matches</a>
 % }
 % if not {
-<a href="/login" class="btn">Login</a>
+<a href="/login?redirect=/random" class="btn">Login</a>
 % }

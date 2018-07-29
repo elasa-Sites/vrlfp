@@ -9,15 +9,36 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/register.tpl apps/users/register.tpl})
 
         if(~ $REQUEST_METHOD POST &&
-           validate_new_user $"post_arg_users_user $"post_arg_users_pass $"post_arg_users_pass2 $"post_arg_users_email $"post_arg_users_tos) {
-            add_new_user $post_arg_users_user $post_arg_users_pass $post_arg_users_email
+           validate_new_user $"post_arg_users_user $"post_arg_users_pass $"post_arg_users_pass2 $"post_arg_users_email $"post_arg_users_dob $"post_arg_users_tos) {
+            add_new_user $post_arg_users_user $post_arg_users_pass $post_arg_users_email $post_arg_users_dob
             email_new_user $post_arg_users_user
             post_redirect $base_url/user/$post_arg_users_user
         }
-    }
-
+    } 
     if not if(~ $req_path /login) {
         handler_body_main=(tpl_handler `{get_lib_file users/login.tpl apps/users/login.tpl})
+    }
+
+    if not if(~ $req_path /activate) {
+        handler_body_main=(tpl_handler `{get_lib_file users/activate.tpl apps/users/activate.tpl})
+
+        if(~ $REQUEST_METHOD POST) {
+            _status=''
+            if(~ $"post_arg_username '' ||
+               ! test -s etc/deactivated/$"post_arg_username/password ||
+               ! ~ `{checkhash `{cat etc/deactivated/$"post_arg_username/password} $"post_arg_password} true)
+                _status='Wrong username or password.'
+            if not if(! ~ $"post_arg_tos yes)
+                _status='You must be at least 18 years of age and agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a> to use this website.'
+            if not {
+                mv etc/deactivated/$"post_arg_username etc/users/
+                notify_success='You account has been reactivated! You can now log in.'
+                post_redirect $base_url/login
+            }
+
+            notify_error=$_status
+            status=$_status
+        }
     }
 
     if not if(~ $req_path /user/* && ! ~ $req_path /user/) {
@@ -27,10 +48,11 @@ fn users_init {
             if(check_user) {
                 if(~ $"post_arg_users_decision date ||
                    ~ $"post_arg_users_decision hookup ||
+                   ~ $"post_arg_users_decision friend ||
                    ~ $"post_arg_users_decision pass) {
                     user=`{basename $req_path}
 
-                    if(! grep -q $user etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/pass) {
+                    if(! grep -q '^'$user'$' etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend etc/users/$logged_user/pass) {
                         echo $user >> etc/users/$logged_user/$post_arg_users_decision
                         if(! ~ $"post_arg_users_decision pass &&
                            grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
@@ -51,9 +73,69 @@ fn users_init {
                     sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/hookup > etc/users/$logged_user/hookup.tmp
                     mv etc/users/$logged_user/hookup.tmp etc/users/$logged_user/hookup
                 }
+                if not if(~ $"post_arg_users_decision unfriend) {
+                    sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/friend > etc/users/$logged_user/friend.tmp
+                    mv etc/users/$logged_user/friend.tmp etc/users/$logged_user/friend
+                }
                 if not if(~ $"post_arg_users_decision unpass) {
                     sed '/^'`{basename $req_path}^'$/d' etc/users/$logged_user/pass > etc/users/$logged_user/pass.tmp
                     mv etc/users/$logged_user/pass.tmp etc/users/$logged_user/pass
+                }
+                if not if(~ $"post_arg_users_banyes yes && check_user mod &&
+                          ! grep -q '^'$logged_user'$' etc/users/`{basename $req_path}^/banyes) {
+                    echo $logged_user >> etc/users/`{basename $req_path}^/banyes
+                    if(~ `{wc -l < etc/users/`{basename $req_path}^/banyes} 3) {
+                        echo Subject: `{basename $req_path} has three votes to ban > /tmp/kwerc_mail
+                        echo >> /tmp/kwerc_mail
+                        echo https://vrlfp.net/user/`{basename $req_path} >> /tmp/kwerc_mail
+                        sendmail -ir noreply@$SERVER_NAME -F $siteTitle moderation@vrlfp.net < /tmp/kwerc_mail
+                        rm /tmp/kwerc_mail
+                    }
+                }
+                if not if(~ $"post_arg_users_banno yes && check_user mod &&
+                          ! grep -q '^'$logged_user'$' etc/users/`{basename $req_path}^/banno)
+                    echo $logged_user >> etc/users/`{basename $req_path}^/banno
+                if not if(~ $"post_arg_users_submit_ban yes && check_user mod &&
+                          ~ `{wc -l < etc/users/`{basename $req_path}^/banyes | awk '{ print ($1 >= 3) }'} 1 || check_user headmod &&
+                          ! ~ `{wc -l < etc/users/`{basename $req_path}^/banno | awk '{ print ($1 >= 1) }'} 1 || check_user headmod) {
+                    _status=()
+                    if(~ $"post_arg_users_ban_reason '')
+                        _status='Missing reason.'
+                    if not if(! test -s etc/users/`{basename $req_path}^/password)
+                        _status='No such user.'
+                    if not {
+                        user=`{basename $req_path}
+
+                        echo Subject: Your VRLFP account has been deactivated > /tmp/kwerc_mail
+                        echo Reply-To: moderation@$SERVER_NAME >> /tmp/kwerc_mail
+                        echo >> /tmp/kwerc_mail
+                        echo Hi $user, >> /tmp/kwerc_mail
+                        echo >> /tmp/kwerc_mail
+                        echo -n Our moderation team has found your VRLFP account in violation of our rules. Reason:' ' >> /tmp/kwerc_mail
+                        echo $post_arg_users_ban_reason | escape_html >> /tmp/kwerc_mail
+                        echo >> /tmp/kwerc_mail
+                        echo Your account data will be kept for 30 days. Please reply to this message within that time if you would like to contest this moderation decision or request immediate deletion of your account. >> /tmp/kwerc_mail
+                        echo >> /tmp/kwerc_mail
+                        echo '-- ' >> /tmp/kwerc_mail
+                        echo $logged_user >> /tmp/kwerc_mail
+                        echo Moderator >> /tmp/kwerc_mail
+                        echo VRLFP >> /tmp/kwerc_mail
+                        echo https://vrlfp.net/ >> /tmp/kwerc_mail
+                        sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email} < /tmp/kwerc_mail
+                        rm /tmp/kwerc_mail
+
+                        if(test -f etc/users/$user/discordid) {
+                            touch etc/roles
+                            chmod g+w etc/roles
+                            echo ban `{cat etc/users/$user/discordid} >> /var/www/kwerc/etc/roles
+                        }
+                        mv etc/users/$user etc/banned/
+
+                        notify_success='Success! The user has been banned and notified.'
+                    }
+        
+                    notify_errors=$_status
+                    status=$_status
                 }
             }
         }
@@ -68,12 +150,34 @@ fn users_init {
     }
 
     if not if(~ $req_path /random) {
-        if(check_user)
+        if(check_user) {
+            if(! grep -q kfarwell etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend etc/users/$logged_user/pass &&
+               ! ~ kfarwell $logged_user &&
+               ~ `{shuf -i 1-10 -n 1} 1)
+                post_redirect $base_url/user/kfarwell
             for(userdir in `{ls etc/users | shuf})
-                if(! grep -q `{basename $userdir} etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/pass &&
+                if(! grep -q `{basename $userdir} etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend etc/users/$logged_user/pass &&
                    ! ~ `{basename $userdir} $logged_user &&
-                   test -s $userdir/age && test -s $userdir/gender && test -s $userdir/lookingfor && test -s $userdir/sexuality)
-                    post_redirect $base_url/user/`{basename $userdir}
+                   test -s $userdir/gender && test -s $userdir/lookingfor && test -s $userdir/sexuality) {
+                    skip=no
+                    for(file in `{ls etc/users/$logged_user/fltr | grep -v age}) {
+                        ok=no
+                        for(filter in `{cat $file}) {
+                            if(~ $ok no && grep -q $filter $userdir/`{basename $file})
+                                ok=yes
+                        }
+                        if(~ $ok no) skip=yes
+                    }
+                    if(test -f etc/users/$logged_user/fltr/minage &&
+                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/minage} | awk '{ print ($1 >= $2) }'} 0)
+                        skip=yes
+                    if(test -f etc/users/$logged_user/fltr/maxage &&
+                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/maxage} | awk '{ print ($1 <= $2) }'} 0)
+                        skip=yes
+                    if(! ~ $skip yes)
+                        post_redirect $base_url/user/`{basename $userdir}
+                }
+        }
         handler_body_main=(tpl_handler `{get_lib_file users/rip.tpl apps/users/rip.tpl})
     }
 
@@ -91,29 +195,47 @@ fn users_init {
 
         if(! ~ $"post_arg_users_submit '') {
             _status=()
-            check_user
-
-            if(! test -s etc/users/$"logged_user/password)
-                _status='Profile error. Try logging out/in. If you just registered or changed your email, ensure you have confirmed your email.'
+            if(! check_user) _status='Not logged in.'
             if not {
                 dir=etc/users/$logged_user
-                rm -f $dir/gender $dir/lookingfor $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr
 
-                if(~ $"post_arg_users_age [0-9]* && ~ `{echo $"post_arg_users_age | awk '{ print ($1 >= 18) }'} 1)
-                    echo -n $post_arg_users_age > $dir/age
-                if not if(! ~ $"post_arg_users_age '')
-                    _status='You must be at least 18 years of age to use this website'
+                if(~ $"post_arg_users_dob [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
+                   ~ `{echo $"post_arg_users_dob | sed 's/^.*-(.*)-.*$/\1/' | awk '{ print ($1 >= 1 && $1 <= 12) }'} 1 &&
+                   ~ `{echo $"post_arg_users_dob | sed 's/^.*-.*-(.*)$/\1/' | awk '{ print ($1 >= 1 && $1 <= 31) }'} 1) {
+                    dob=`{echo $"post_arg_users_dob | sed 's,/,,g'}
+                    now=`{yyyymmdd `{date -u}}
+                    if(~ `{echo $dob $now | awk '{ print ($1 < $2 - 180000) }'} 1) {
+                        echo -n $post_arg_users_dob > $dir/dob
+                        rm $dir/age
+                    }
+                    if not
+                        _status='You must be at least 18 years of age to use this website'
+                }
 
-                for(i in post_arg_users_location post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone post_arg_users_bio post_arg_users_sketchfab)
+                for(i in post_arg_users_location post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone post_arg_users_bio)
                     echo -n $"$i > $dir/`{echo $i | sed 's/post_arg_users_//'}
 
-                for(i in post_arg_users_gender_Woman post_arg_users_gender_Man post_arg_users_gender_Agender post_arg_users_gender_Androgynous post_arg_users_gender_Bigender post_arg_users_gender_Cis_Man post_arg_users_gender_Cis_Woman post_arg_users_gender_Genderfluid post_arg_users_gender_Genderqueer post_arg_users_gender_Gender_Nonconforming post_arg_users_gender_Hijra post_arg_users_gender_Intersex post_arg_users_gender_Nonbinary post_arg_users_gender_Other_Gender post_arg_users_gender_Pangender post_arg_users_gender_Transfeminine post_arg_users_gender_Transmasculine post_arg_users_gender_Transsexual post_arg_users_gender_Trans_Man post_arg_users_gender_Trans_Woman post_arg_users_gender_Two_Spirit)
+                rm -f $dir/sketchfab $dir/gender $dir/mute $dir/lookingfor $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr $dir/fltr/lookingfor
+
+                if(~ `{echo $"post_arg_users_sketchfab | awk '{ print $1 ~ /^[a-z0-9]+$/ }' } 1)
+                    echo -n $post_arg_users_sketchfab > $dir/sketchfab
+
+                for(i in post_arg_users_gender_Woman post_arg_users_gender_Man post_arg_users_gender_Agender post_arg_users_gender_Androgynous post_arg_users_gender_Bigender post_arg_users_gender_Cis_Man post_arg_users_gender_Cis_Woman post_arg_users_gender_Genderfluid post_arg_users_gender_Genderqueer post_arg_users_gender_Gender_Nonconforming post_arg_users_gender_Hijra post_arg_users_gender_Intersex post_arg_users_gender_Nonbinary post_arg_users_gender_Other_Gender post_arg_users_gender_Pangender post_arg_users_gender_Transfeminine post_arg_users_gender_Transmasculine post_arg_users_gender_Transsexual post_arg_users_gender_Trans_Man post_arg_users_gender_Trans_Woman post_arg_users_gender_Two_Spirit post_arg_users_gender_VR_Trap post_arg_users_gender_IRL_Trap)
                     if(~ $"$i yes)
                         echo $i | sed 's/post_arg_users_gender_//' >> $dir/gender
 
-                for(i in post_arg_users_lookingfor_Looking_For_Date___VR_Only post_arg_users_lookingfor_Looking_For_Hookup___VR_Only post_arg_users_lookingfor_Looking_For_Date___VR_and_IRL post_arg_users_lookingfor_Looking_For_Hookup___VR_and_IRL post_arg_users_lookingfor_Looking_For_Serious_Relationship post_arg_users_lookingfor_Just_Roleplaying)
+                for(i in post_arg_users_mute_Mute post_arg_users_mute_Selective_Mute) {
                     if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_mute_//' >> $dir/mute
+                }
+                if(! test -s $dir/mute)
+                    echo Not_Mute >> $dir/mute
+
+                for(i in post_arg_users_lookingfor_Looking_For_Date post_arg_users_lookingfor_Looking_For_Hookup post_arg_users_lookingfor_Looking_For_Homie post_arg_users_lookingfor_Roleplaying)
+                    if(~ $"$i yes) {
                         echo $i | sed 's/post_arg_users_lookingfor_//' >> $dir/lookingfor
+                        echo $i | sed 's/post_arg_users_lookingfor_//' >> $dir/fltr/lookingfor
+                    }
 
                 for(i in post_arg_users_status_Single post_arg_users_status_Seeing_Someone post_arg_users_status_Married)
                     if(~ $"$i yes)
@@ -123,7 +245,7 @@ fn users_init {
                     if(~ $"$i yes)
                         echo $i | sed 's/post_arg_users_type_//' >> $dir/type
 
-                for(i in post_arg_users_sexuality_Straight___VR post_arg_users_sexuality_Gay___VR post_arg_users_sexuality_Bisexual___VR post_arg_users_sexuality_Asexual___VR post_arg_users_sexuality_Demisexual___VR post_arg_users_sexuality_Heteroflexible___VR post_arg_users_sexuality_Homoflexible___VR post_arg_users_sexuality_Lesbian___VR post_arg_users_sexuality_Pansexual___VR post_arg_users_sexuality_Queer___VR post_arg_users_sexuality_Questioning___VR post_arg_users_sexuality_Sapiosexual___VR post_arg_users_sexuality_Trapsexual___VR post_arg_users_sexuality_Trapsexual___VR_Mutes_Only post_arg_users_sexuality_Heteroromantic___VR post_arg_users_sexuality_Homoromantic___VR post_arg_users_sexuality_Biromantic___VR post_arg_users_sexuality_Aromantic___VR post_arg_users_sexuality_Demiromantic___VR post_arg_users_sexuality_Panromantic___VR post_arg_users_sexuality_Sapioromantic___VR post_arg_users_sexuality_Trapromantic___VR post_arg_users_sexuality_Trapromantic___VR_Mutes_Only post_arg_users_sexuality_Straight___IRL post_arg_users_sexuality_Gay___IRL post_arg_users_sexuality_Bisexual___IRL post_arg_users_sexuality_Asexual___IRL post_arg_users_sexuality_Demisexual___IRL post_arg_users_sexuality_Heteroflexible___IRL post_arg_users_sexuality_Homoflexible___IRL post_arg_users_sexuality_Lesbian___IRL post_arg_users_sexuality_Pansexual___IRL post_arg_users_sexuality_Queer___IRL post_arg_users_sexuality_Questioning___IRL post_arg_users_sexuality_Sapiosexual___IRL post_arg_users_sexuality_Trapsexual___IRL post_arg_users_sexuality_Heteroromantic___IRL post_arg_users_sexuality_Homoromantic___IRL post_arg_users_sexuality_Biromantic___IRL post_arg_users_sexuality_Aromantic___IRL post_arg_users_sexuality_Demiromantic___IRL post_arg_users_sexuality_Panromantic___IRL post_arg_users_sexuality_Sapioromantic___IRL post_arg_users_sexuality_Trapromantic___IRL)
+                for(i in post_arg_users_sexuality_Straight___VR post_arg_users_sexuality_Gay___VR post_arg_users_sexuality_Bisexual___VR post_arg_users_sexuality_Asexual___VR post_arg_users_sexuality_Demisexual___VR post_arg_users_sexuality_Heteroflexible___VR post_arg_users_sexuality_Homoflexible___VR post_arg_users_sexuality_Lesbian___VR post_arg_users_sexuality_Pansexual___VR post_arg_users_sexuality_Queer___VR post_arg_users_sexuality_Questioning___VR post_arg_users_sexuality_Sapiosexual___VR post_arg_users_sexuality_Trapsexual___VR post_arg_users_sexuality_Trapsexual___VR_Mutes_Only post_arg_users_sexuality_Heteroromantic___VR post_arg_users_sexuality_Homoromantic___VR post_arg_users_sexuality_Biromantic___VR post_arg_users_sexuality_Aromantic___VR post_arg_users_sexuality_Demiromantic___VR post_arg_users_sexuality_Panromantic___VR post_arg_users_sexuality_Sapioromantic___VR post_arg_users_sexuality_Trapromantic___VR post_arg_users_sexuality_Trapromantic___VR_Mutes_Only post_arg_users_sexuality_Straight___IRL post_arg_users_sexuality_Gay___IRL post_arg_users_sexuality_Bisexual___IRL post_arg_users_sexuality_Asexual___IRL post_arg_users_sexuality_Demisexual___IRL post_arg_users_sexuality_Heteroflexible___IRL post_arg_users_sexuality_Homoflexible___IRL post_arg_users_sexuality_Lesbian___IRL post_arg_users_sexuality_Pansexual___IRL post_arg_users_sexuality_Queer___IRL post_arg_users_sexuality_Questioning___IRL post_arg_users_sexuality_Sapiosexual___IRL post_arg_users_sexuality_Trapsexual___IRL post_arg_users_sexuality_Heteroromantic___IRL post_arg_users_sexuality_Homoromantic___IRL post_arg_users_sexuality_Biromantic___IRL post_arg_users_sexuality_Aromantic___IRL post_arg_users_sexuality_Demiromantic___IRL post_arg_users_sexuality_Panromantic___IRL post_arg_users_sexuality_Sapioromantic___IRL post_arg_users_sexuality_Trapromantic___IRL post_arg_users_sexuality_Homieromantic)
                     if(~ $"$i yes)
                         echo $i | sed 's/post_arg_users_sexuality_//' >> $dir/sexuality
 
@@ -142,11 +264,166 @@ fn users_init {
                 for(i in post_arg_users_vr_Mobile_VR post_arg_users_vr_Standing_VR post_arg_users_vr_360_VR post_arg_users_vr_Roomscale_VR post_arg_users_vr_Full_Body_VR)
                     if(~ $"$i yes)
                         echo $i | sed 's/post_arg_users_vr_//' >> $dir/vr
+                if(! test -s $dir/vr)
+                    echo No_VR >> $dir/vr
 
+                if(test -s $dir/discordid)
+                    discord_roles `{cat $dir/discordid} $dir
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_picture '' && ! ~ $"post_arg_users_picture '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not {
+                ext=`{basename $post_arg_users_picture |
+                      sed 's/.*\.(.*)$/\1/; s/[^a-zA-Z0-9]//g; s/jpeg/jpg/' |
+                      tr 'A-Z' 'a-z'}
+                if(! ~ $ext png && ! ~ $ext jpg && ! ~ $ext gif)
+                    _status=($_status 'Filetype must be png, jpg, or gif.')
+                if not if(! ~ $"post_arg_users_picture_nsfw yes) {
+                    if(test -s etc/users/$logged_user/piccount)
+                        count=`{awk 'echo $1++' < etc/users/$logged_user/piccount}
+                    if not
+                        count=1
+                    echo -n $count > etc/users/$logged_user/piccount
+                    mv /tmp/kwerc_file.* $sitedir/img/users/$logged_user/$count.$ext
+                    while(test -f /tmp/kwerc_thumb) sleep 1
+                    rm -rf /tmp/kwerc_thumb
+                    cp $sitedir/img/users/$logged_user/$count.$ext /tmp/kwerc_thumb
+                    sudo /var/www/kwerc/bin/genthumb.rc
+                    mv /tmp/kwerc_thumb $sitedir/img/users/thumbs/$logged_user/$count.$ext
+                }
+                if not {
+                    if(test -s etc/users/$logged_user/nsfwcount)
+                        count=`{awk 'echo $1++' < etc/users/$logged_user/nsfwcount}
+                    if not
+                        count=1
+                    echo -n $count > etc/users/$logged_user/nsfwcount
+                    mv /tmp/kwerc_file.* $sitedir/img/users/nsfw/$logged_user/$count.$ext
+                    while(test -f /tmp/kwerc_thumb) sleep 1
+                    rm -rf /tmp/kwerc_thumb
+                    cp $sitedir/img/users/nsfw/$logged_user/$count.$ext /tmp/kwerc_thumb
+                    sudo /var/www/kwerc/bin/genthumb.rc
+                    mv /tmp/kwerc_thumb $sitedir/img/users/nsfw/thumbs/$logged_user/$count.$ext
+                }
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(~ `{echo $"post_arg_users_picture_delete | awk '{ print ($1 ~ /^[0-9]+\.(png|jpg|gif)$/) }'} 1) {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not rm $sitedir/img/users/$logged_user/$post_arg_users_picture_delete $sitedir/img/users/thumbs/$logged_user/$post_arg_users_picture_delete
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(~ `{echo $"post_arg_users_picture_delete_nsfw | awk '{ print ($1 ~ /^[0-9]+\.(png|jpg|gif)$/) }'} 1) {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not rm $sitedir/img/users/nsfw/$logged_user/$post_arg_users_picture_delete_nsfw $sitedir/img/users/nsfw/thumbs/$logged_user/$post_arg_users_picture_delete_nsfw
+
+            notify_errors=$_status
+            status=$_status
+        }
+    }
+
+    if not if(~ $req_path /settings) {
+        handler_body_main=(tpl_handler `{get_lib_file users/settings.tpl apps/users/settings.tpl})
+
+        if(! ~ $"post_arg_users_submit_filters '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not {
+                dir=etc/users/$logged_user/fltr
+
+                rm -f $dir/gender $dir/lookingfor
+
+                for(i in post_arg_users_fltr_gender_Woman post_arg_users_fltr_gender_Man post_arg_users_fltr_gender_Agender post_arg_users_fltr_gender_Androgynous post_arg_users_fltr_gender_Bigender post_arg_users_fltr_gender_Cis_Man post_arg_users_fltr_gender_Cis_Woman post_arg_users_fltr_gender_Genderfluid post_arg_users_fltr_gender_Genderqueer post_arg_users_fltr_gender_Gender_Nonconforming post_arg_users_fltr_gender_Hijra post_arg_users_fltr_gender_Intersex post_arg_users_fltr_gender_Nonbinary post_arg_users_fltr_gender_Other_Gender post_arg_users_fltr_gender_Pangender post_arg_users_fltr_gender_Transfeminine post_arg_users_fltr_gender_Transmasculine post_arg_users_fltr_gender_Transsexual post_arg_users_fltr_gender_Trans_Man post_arg_users_fltr_gender_Trans_Woman post_arg_users_fltr_gender_Two_Spirit post_arg_users_fltr_gender_VR_Trap post_arg_users_fltr_gender_IRL_Trap)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_gender_//' >> $dir/gender
+
+                for(i in post_arg_users_fltr_lookingfor_Looking_For_Date post_arg_users_fltr_lookingfor_Looking_For_Hookup post_arg_users_fltr_lookingfor_Looking_For_Homie post_arg_users_fltr_lookingfor_Roleplaying)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_lookingfor_//' >> $dir/lookingfor
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_filters_advanced '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not if(! check_user premium) _status='You need a premium account to change your profile filters.'
+            if not {
+                dir=etc/users/$logged_user/fltr
+
+                rm -f $dir/minage $dir/maxage $dir/mute $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr
+
+                if(! ~ $"post_arg_users_fltr_minage '') {
+                    if(~ `{echo $"post_arg_users_fltr_minage | awk '{ print ($1 ~ /^[0-9]+$/) }'} 0)
+                        _status='Invalid age.'
+                    if not if(~ `{echo $"post_arg_users_fltr_minage | awk '{ print ($1 >= 18) }'} 0)
+                        _status='No.'
+                    if not
+                        echo -n $post_arg_users_fltr_minage > $dir/minage
+                }
+                if(! ~ $"post_arg_users_fltr_maxage '') {
+                    if(~ `{echo $"post_arg_users_fltr_maxage | awk '{ print ($1 ~ /^[0-9]+$/) }'} 0)
+                        _status='Invalid age.'
+                    if not
+                        echo -n $post_arg_users_fltr_maxage > $dir/maxage
+                }
+
+                for(i in post_arg_users_fltr_mute_Not_Mute post_arg_users_fltr_mute_Selective_Mute post_arg_users_fltr_mute_Mute) {
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_mute_//' >> $dir/mute
+                }
+
+                for(i in post_arg_users_fltr_status_Single post_arg_users_fltr_status_Seeing_Someone post_arg_users_fltr_status_Married)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_status_//' >> $dir/status
+
+                for(i in post_arg_users_fltr_type_Monogamous post_arg_users_fltr_type_Polygamous)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_type_//' >> $dir/type
+
+                for(i in post_arg_users_fltr_sexuality_Straight___VR post_arg_users_fltr_sexuality_Gay___VR post_arg_users_fltr_sexuality_Bisexual___VR post_arg_users_fltr_sexuality_Asexual___VR post_arg_users_fltr_sexuality_Demisexual___VR post_arg_users_fltr_sexuality_Heteroflexible___VR post_arg_users_fltr_sexuality_Homoflexible___VR post_arg_users_fltr_sexuality_Lesbian___VR post_arg_users_fltr_sexuality_Pansexual___VR post_arg_users_fltr_sexuality_Queer___VR post_arg_users_fltr_sexuality_Questioning___VR post_arg_users_fltr_sexuality_Sapiosexual___VR post_arg_users_fltr_sexuality_Trapsexual___VR post_arg_users_fltr_sexuality_Trapsexual___VR_Mutes_Only post_arg_users_fltr_sexuality_Heteroromantic___VR post_arg_users_fltr_sexuality_Homoromantic___VR post_arg_users_fltr_sexuality_Biromantic___VR post_arg_users_fltr_sexuality_Aromantic___VR post_arg_users_fltr_sexuality_Demiromantic___VR post_arg_users_fltr_sexuality_Panromantic___VR post_arg_users_fltr_sexuality_Sapioromantic___VR post_arg_users_fltr_sexuality_Trapromantic___VR post_arg_users_fltr_sexuality_Trapromantic___VR_Mutes_Only post_arg_users_fltr_sexuality_Straight___IRL post_arg_users_fltr_sexuality_Gay___IRL post_arg_users_fltr_sexuality_Bisexual___IRL post_arg_users_fltr_sexuality_Asexual___IRL post_arg_users_fltr_sexuality_Demisexual___IRL post_arg_users_fltr_sexuality_Heteroflexible___IRL post_arg_users_fltr_sexuality_Homoflexible___IRL post_arg_users_fltr_sexuality_Lesbian___IRL post_arg_users_fltr_sexuality_Pansexual___IRL post_arg_users_fltr_sexuality_Queer___IRL post_arg_users_fltr_sexuality_Questioning___IRL post_arg_users_fltr_sexuality_Sapiosexual___IRL post_arg_users_fltr_sexuality_Trapsexual___IRL post_arg_users_fltr_sexuality_Heteroromantic___IRL post_arg_users_fltr_sexuality_Homoromantic___IRL post_arg_users_fltr_sexuality_Biromantic___IRL post_arg_users_fltr_sexuality_Aromantic___IRL post_arg_users_fltr_sexuality_Demiromantic___IRL post_arg_users_fltr_sexuality_Panromantic___IRL post_arg_users_fltr_sexuality_Sapioromantic___IRL post_arg_users_fltr_sexuality_Trapromantic___IRL post_arg_users_fltr_sexuality_Homieromantic)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_sexuality_//' >> $dir/sexuality
+
+                for(i in post_arg_users_fltr_role_Submissive post_arg_users_fltr_role_Dominant post_arg_users_fltr_role_Switch)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_role_//' >> $dir/role
+
+                for(i in post_arg_users_fltr_kinks_Ageplayer post_arg_users_fltr_kinks_Boy_or_Girl post_arg_users_fltr_kinks_Daddy_or_Mommy post_arg_users_fltr_kinks_Brat post_arg_users_fltr_kinks_Brat_Tamer post_arg_users_fltr_kinks_Degradee post_arg_users_fltr_kinks_Degrader post_arg_users_fltr_kinks_Exhibitionist post_arg_users_fltr_kinks_Experimentalist post_arg_users_fltr_kinks_Masochist post_arg_users_fltr_kinks_Sadist post_arg_users_fltr_kinks_Master_or_Mistress post_arg_users_fltr_kinks_Slave post_arg_users_fltr_kinks_Owner post_arg_users_fltr_kinks_Pet post_arg_users_fltr_kinks_Hunter post_arg_users_fltr_kinks_Prey post_arg_users_fltr_kinks_Rigger post_arg_users_fltr_kinks_Rope_Bunny post_arg_users_fltr_kinks_Voyeur)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_kinks_//' >> $dir/kinks
+
+                for(i in post_arg_users_fltr_games_VRChat post_arg_users_fltr_games_Rec_Room post_arg_users_fltr_games_AltspaceVR post_arg_users_fltr_games_vTime post_arg_users_fltr_games_Sansar post_arg_users_fltr_games_High_Fidelity post_arg_users_fltr_games_TheWaveVR post_arg_users_fltr_games_Facebook_Spaces)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_games_//' >> $dir/games
+
+                for(i in post_arg_users_fltr_vr_Mobile_VR post_arg_users_fltr_vr_Standing_VR post_arg_users_fltr_vr_360_VR post_arg_users_fltr_vr_Roomscale_VR post_arg_users_fltr_vr_Full_Body_VR)
+                    if(~ $"$i yes)
+                        echo $i | sed 's/post_arg_users_fltr_vr_//' >> $dir/vr
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+        if not if(! ~ $"post_arg_users_submit_settings '') {
+            _status=()
+            if(! check_user) _status='Not logged in.'
+            if not {
                 if(~ $"post_arg_users_nsfw yes)
-                    touch $dir/nsfw
+                    touch etc/users/$logged_user/nsfw
                 if not
-                    rm $dir/nsfw
+                    rm -f etc/users/$logged_user/nsfw
             }
 
             notify_errors=$_status
@@ -157,17 +434,20 @@ fn users_init {
             if(! check_user) _status='Not logged in.'
             if not
                 if(! test -s etc/users/$logged_user/password ||
-                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true)
+                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true) {
                     _status=($_status 'Wrong password.')
+                    dprint Failed login to $logged_user for email change from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+                }
                 if not if(~ $"post_arg_users_email '' || ~ $"post_arg_users_email `{cat etc/users/$logged_user/email})
                     _status=($_status 'Missing or unchanged email'.)
                 if not {
+                    dprint $logged_user changed email `{cat etc/users/$logged_user/email} to $post_arg_users_email from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                     echo $post_arg_users_email > etc/users/$logged_user/email
                     rm -rf etc/sessions/`{cat etc/users/$logged_user/session}
                     rm -f etc/users/$logged_user/session
                     mv etc/users/$logged_user etc/unconfirmed/
                     email_new_user $logged_user
-                    #post_redirect $base_url/user/$logged_user
+                    post_redirect $base_url/user/$logged_user
                 }
 
             notify_errors=$_status
@@ -178,12 +458,16 @@ fn users_init {
             if(! check_user) _status='Not logged in.'
             if not
                 if(! test -s etc/users/$logged_user/password ||
-                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_passold} true)
+                   ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_passold} true) {
                     _status=($_status 'Wrong current password.')
+                    dprint Failed login to $logged_user for password change from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+                }
                 if not if(! validate_password $logged_user $"post_arg_users_pass $"post_arg_users_pass2)
                     _status=($_status 'New password missing, non-matching, or insecure.')
                 if not {
-                    echo -n $pass | genhash > $udir/password
+                    echo -n $post_arg_users_pass | genhash > etc/users/$logged_user/password
+                    rm -rf etc/sessions/`{cat etc/users/$logged_user/session} etc/users/$logged_user/session
+                    dprint $logged_user changed password from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                     notify_success='Password changed.'
                 }
 
@@ -197,16 +481,109 @@ fn users_init {
                 if(! test -s etc/users/$logged_user/password ||
                    ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true) {
                     _status=($_status 'Wrong password.')
+                    dprint Failed login to $logged_user for account deletion from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                 }
                 if not {
-                    rm -r etc/users/$logged_user
+                    /usr/bin/sed -i '/^'$logged_user'$/d' etc/users/*/date etc/users/*/hookup etc/users/*/friend etc/users/*/pass
+                    rm -rf etc/sessions/`{cat etc/users/$logged_user/session} etc/users/$logged_user $sitedir/img/users/$logged_user $sitedir/img/users/nsfw/$logged_user
                     notify_success='Account deleted.'
+                    dprint $logged_user deleted account from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                     post_redirect $base_url/register
                 }
 
             notify_errors=$_status
             status=$_status
         }
+    }
+
+    if not if(~ $req_path /report/*) {
+        handler_body_main=(tpl_handler `{get_lib_file users/report.tpl apps/users/report.tpl})
+
+        if(! ~ $"post_arg_users_submit_report '') {
+            _status=()
+            if(~ $"post_arg_users_report_user '' || ! test -s etc/users/$"post_arg_users_report_user/password)
+                _status='Missing or invalid user.'
+            if not if(~ $"post_arg_users_report_reason '')
+                _status='Missing reason.'
+            if not if(~ $"post_arg_users_report_email '')
+                _status='Missing email.'
+            if not {
+                echo $post_arg_users_report_email > etc/users/$post_arg_users_report_user/reported
+                echo Subject: [Report] [$post_arg_users_report_reason] $post_arg_users_report_user > /tmp/kwerc_mail
+                echo Reply-To: $post_arg_users_report_email >> /tmp/kwerc_mail
+                echo >> /tmp/kwerc_mail
+                echo https://vrlfp.net/user/$post_arg_users_report_user >> /tmp/kwerc_mail
+                echo >> /tmp/kwerc_mail
+                echo $"post_arg_users_report_details | escape_html >> /tmp/kwerc_mail
+                sendmail -ir noreply@$SERVER_NAME -F $siteTitle moderation@vrlfp.net < /tmp/kwerc_mail
+                rm /tmp/kwerc_mail
+                notify_success='You report has been sent. Our moderation team will review it as soon as possible. Thank you for keeping VRLFP safe!'
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+    }
+
+    if not if(~ $req_path /forgot) {
+        handler_body_main=(tpl_handler `{get_lib_file users/forgot.tpl apps/users/forgot.tpl})
+
+        if(! ~ $"post_arg_users_submit_forgot '') {
+            _status=()
+            if(~ $"post_arg_users_forgot_user '' || ! test -s etc/users/$"post_arg_users_forgot_user/password)
+                _status='Missing or invalid user.'
+            if not if(! ~ $"post_arg_users_forgot_email `{cat etc/users/$"post_arg_users_forgot_user/email})
+                _status='Wrong email address.'
+            if not {
+                reset=`{genid 32}
+                mkdir etc/reset/$reset
+                echo $post_arg_users_forgot_user > etc/reset/$reset/user
+                date -nu | awk '{ print ($1 + 86400) }' > etc/reset/$reset/expiry
+
+                if(test -f $sitedir/_kwerc/mail/reset)
+                    body=$sitedir/_kwerc/mail/reset
+                if not
+                    body=etc/mail/reset
+
+                sed 's,\$resetLink,'$base_url'/reset/'$reset',g; s,\$siteTitle,'$siteTitle',g; s,\$replyTo,security@'$SERVER_NAME',g' < $body |
+                    sendmail -ir noreply@$SERVER_NAME -F $siteTitle $post_arg_users_forgot_email
+
+                notify_success='Success! Check your email for a link to reset your password.'
+                dprint $logged_user sent password reset request from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+            }
+
+            notify_errors=$_status
+            status=$_status
+        }
+    }
+
+    if not if(~ $req_path /reset/*) {
+        handler_body_main=(tpl_handler `{get_lib_file users/reset.tpl apps/users/reset.tpl})
+
+        _status=()
+        rdir=etc/reset/`{basename $req_path}
+
+        if(! test -d $rdir) {
+            _status='Invalid or already-used reset code. Check the link or try resetting again. Someone else may have reset your password. If you suspect this is the case, contact <a href="mailto:security@'$SERVER_NAME'">security@'$SERVER_NAME'</a>.'
+            dprint $logged_user attempted to use invalid password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+        }
+        if not if(~ `{awk '{ print ($1 < '`{date -nu}^') }' < $rdir/expiry} 1) {
+            _status='Confirmation code expired.'
+            dprint $logged_user attempted to use expired password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+        }
+        if not if(! ~ $"post_arg_users_submit_reset '') {
+            if(! validate_password `{cat $rdir/user} $"post_arg_users_reset_pass $"post_arg_users_reset_pass2)
+                _status='Password missing, non-matching, or insecure.'
+            if not {
+                echo -n $post_arg_users_reset_pass | genhash > etc/users/`{cat $rdir/user}^/password
+                rm -r $rdir
+                notify_success='Your password has been reset.'
+                dprint $logged_user reset password from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
+            }
+        }
+
+        notify_errors=$_status
+        status=$_status
     }
 
     if not if(~ $req_path /confirm/*) {
@@ -232,12 +609,13 @@ fn users_init {
 }
 
 fn validate_new_user {
-    user=$1; pass=$2; pass2=$3; email=$4; tos=$5
+    user=$1; pass=$2; pass2=$3; email=$4; dob=$5; tos=$6
+    userlower=`{echo $user | tr 'A-Z' 'a-z'}
     _status=()
 
     if(~ $"user '' || ! echo $user | sed 1q | grep -s '^'$allowed_user_chars'+$')
-        _status='Missing or invalid username. Allowed characters: '^$allowed_user_chars^'+'
-    if not if(test -d etc/users/$user || test -d etc/unconfirmed/$user)
+        _status='Missing or invalid username. Allowed characters: A to Z, a to z, 0 to 9, _'
+    if not if(test -d etc/users/$userlower || test -d etc/unconfirmed/$userlower || test -d etc/deactivated/$userlower || test -d etc/banned/$userlower)
         _status='Username '''^$user^''' already taken. Please choose a different one.'
 
     if(! ~ $"user '')
@@ -247,9 +625,22 @@ fn validate_new_user {
 
     if(~ $"email '')
         _status=($_status 'Missing email.')
+    if not if(grep -q '^'$email'$' etc/users/*/email etc/unconfirmed/*/email etc/banned/*/email etc/disabled/*/email etc/deactivated/*/email)
+        _status=($_status 'An account already exists with this email address.')
+
+    if(~ $"dob [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
+       ~ `{echo $"dob | sed 's/^.*-(.*)-.*$/\1/' | awk '{ print ($1 >= 1 && $1 <= 12) }'} 1 &&
+       ~ `{echo $"dob | sed 's/^.*-.*-(.*)$/\1/' | awk '{ print ($1 >= 1 && $1 <= 31) }'} 1) {
+        dob=`{echo $"dob | sed 's,-,,g'}
+        now=`{yyyymmdd `{date -u}}
+        if(~ `{echo $dob $now | awk '{ print ($1 < $2 - 180000) }'} 0)
+            _status=($_status 'You must be at least 18 years of age to use this website.')
+    }
+    if not
+            _status=($_status 'Wrong date format.')
 
     if(! ~ $"tos yes)
-        _status=($_status 'You must be at least 18 years of age and agree to the <a href="/terms">Terms of Service</a> to use this website.')
+        _status=($_status 'You must agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a> to use this website.')
 
     notify_errors=$_status
     status=$_status
@@ -268,13 +659,17 @@ fn validate_password {
 }
 
 fn add_new_user {
-    user=$1; pass=$2; email=$3
+    user=$1; pass=$2; email=$3; dob=$4
     udir=etc/unconfirmed/$user
 
-    mkdir $udir $sitedir/img/users/$user $sitedir/img/users/nsfw/$user
+    mkdir $udir $udir/fltr $sitedir/img/users/$user $sitedir/img/users/thumbs/$user $sitedir/img/users/nsfw/$user $sitedir/img/users/nsfw/thumbs/$user
+    chmod g+w $udir
     echo $email > $udir/email
+    echo -n $dob > $udir/dob
     echo -n $pass | genhash > $udir/password
-    touch $udir/date $udir/hookup $udir/pass
+    chmod g-r $udir/password
+    chmod o-r $udir/password
+    touch $udir/date $udir/hookup $udir/friend $udir/pass
 }
 
 fn email_new_user {

@@ -73,6 +73,8 @@ Populate etc/badpasswords with passwords you want to blacklist.
 
     https://github.com/danielmiessler/SecLists/tree/master/Passwords
 
+Add bin/aux/prune.rc to root's crontab.
+
 For general configuration options copy etc/initrc to etc/initrc.local and
 customize it as needed. Site (and directory) specific options can be set in a
 sites/example.com/_werc/config file inside the site's directory. To customize

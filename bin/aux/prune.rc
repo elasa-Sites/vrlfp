@@ -1,0 +1,36 @@
+#!/bin/rc
+
+if(! ~ $#kwerc_root 0)
+    cd $kwerc_root
+
+if(! test -d sites/) {
+    echo $0: 'Run in root of kwerc installation or set $kwerc_root' >[1=2]
+    exit
+}
+
+. ./etc/initrc
+
+if(test -f etc/initrc.local)
+    . ./etc/initrc.local
+
+path=($plan9port/bin . ./bin ./bin/contrib /bin /usr/bin /usr/sbin)
+
+date=`{date -n}
+
+for(user in etc/banned/*)
+    if(test -s $user/expiry && ~ `{awk '{ print ($1 < '$date') }' < $user/expiry} 1)
+        rm -r $user/*
+
+for(session in etc/sessions/*)
+    if(~ `{awk '{ print ($1 < '$date') }' < $session/expiryabs} 1)
+        rm -r $session
+
+for(confirmation in etc/confirm/*)
+    if(~ `{awk '{ print ($1 < '$date') }' < $confirmation/expiry} 1)
+        rm -r $confirmation
+
+for(reset in etc/reset/*)
+    if(~ `{awk '{ print ($1 < '$date') }' < $reset/expiry} 1)
+        rm -r $reset
+
+echo Finished pruning in `{echo `{date -n} $date | awk '{ print ($1 - $2) }'} seconds.

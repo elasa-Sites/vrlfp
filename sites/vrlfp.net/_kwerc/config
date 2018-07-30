@@ -6,6 +6,6 @@ confirmFrom='noreply@vrlfp.net'
 conf_enable_users
 conf_enable_admin
 conf_enable_discord
-conf_hide_paths /img
+conf_hide_paths /img /d41b9ebc7138e5ce248e1c2e134e011e
 
 if(~ $req_path /discord) extraHttpHeaders=($extraHttpHeaders 'Status: 303 See Other' 'Location: https://discordapp.com/invite/PXsjCx6')

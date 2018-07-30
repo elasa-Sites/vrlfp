@@ -23,7 +23,7 @@ fn listDir {
         echo '<ul class="sitemap-list">'
 
         for(i in `{ls -dF $d^*/ $d^*.md $d^*.html $d^*.txt >[2]/dev/null | sed $dirfilter}) {
-            desc=`{get_file_title $i}
+            #desc=`{get_file_title $i}
             u=`{echo $i|sed 's!'$sitedir'!!; '$dirclean's!/index$!/!; '}
             if(! ~ $#desc 0 && ! ~ $desc '')
                 desc=' - '$"desc

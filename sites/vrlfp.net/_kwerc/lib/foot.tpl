@@ -14,7 +14,9 @@
         <a href="/terms">Terms of Service</a>
         <a href="/privacy">Privacy Policy</a>
         <a href="https://code.kfarwell.org/vrlfp/" target="_blank">Code</a>
+        <a href="https://github.com/vrlfp" target="_blank">Issues & PRs</a>
         <a href="/sitemap">Sitemap</a><br />
+        <a href="mailto:hello@vrlfp.net">Contact</a>
         <a href="mailto:story@vrlfp.net">Submit a Success Story</a>
         <a href="mailto:press@vrlfp.net">Press</a>
         <a href="mailto:support@vrlfp.net">Support</a>

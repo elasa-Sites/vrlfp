@@ -160,7 +160,7 @@ fn users_init {
                    ! ~ `{basename $userdir} $logged_user &&
                    test -s $userdir/gender && test -s $userdir/lookingfor && test -s $userdir/sexuality) {
                     skip=no
-                    for(file in `{ls etc/users/$logged_user/fltr | grep -v age}) {
+                    for(file in `{ls etc/users/$logged_user/fltr | grep -v '(age|bio|pass)'}) {
                         ok=no
                         for(filter in `{cat $file}) {
                             if(~ $ok no && grep -q $filter $userdir/`{basename $file})
@@ -171,8 +171,12 @@ fn users_init {
                     if(test -f etc/users/$logged_user/fltr/minage &&
                        ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/minage} | awk '{ print ($1 >= $2) }'} 0)
                         skip=yes
-                    if(test -f etc/users/$logged_user/fltr/maxage &&
+                    if not if(test -f etc/users/$logged_user/fltr/maxage &&
                        ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/maxage} | awk '{ print ($1 <= $2) }'} 0)
+                        skip=yes
+                    if not if(test -f etc/users/$logged_user/fltr/nobio && ! test -s $userdir/bio)
+                        skip=yes
+                    if not if(test -f etc/users/$logged_user/fltr/pass && grep -q '^'$logged_user'$' $userdir/pass)
                         skip=yes
                     if(! ~ $skip yes)
                         post_redirect $base_url/user/`{basename $userdir}
@@ -362,7 +366,7 @@ fn users_init {
             if not {
                 dir=etc/users/$logged_user/fltr
 
-                rm -f $dir/minage $dir/maxage $dir/mute $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr
+                rm -f $dir/minage $dir/maxage $dir/mute $dir/status $dir/type $dir/sexuality $dir/role $dir/kinks $dir/games $dir/vr $dir/nobio $dir/pass
 
                 if(! ~ $"post_arg_users_fltr_minage '') {
                     if(~ `{echo $"post_arg_users_fltr_minage | awk '{ print ($1 ~ /^[0-9]+$/) }'} 0)
@@ -411,6 +415,11 @@ fn users_init {
                 for(i in post_arg_users_fltr_vr_Mobile_VR post_arg_users_fltr_vr_Standing_VR post_arg_users_fltr_vr_360_VR post_arg_users_fltr_vr_Roomscale_VR post_arg_users_fltr_vr_Full_Body_VR)
                     if(~ $"$i yes)
                         echo $i | sed 's/post_arg_users_fltr_vr_//' >> $dir/vr
+
+                if(~ $"post_arg_users_fltr_nobio yes)
+                    touch $dir/nobio
+                if(~ $"post_arg_users_fltr_pass yes)
+                    touch $dir/pass
             }
 
             notify_errors=$_status

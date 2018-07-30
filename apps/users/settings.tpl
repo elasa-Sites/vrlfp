@@ -287,6 +287,13 @@
             <label for="Full_Body_VR">Full Body VR</label>
             <br /><label>What kind of VR do they have?</label>
         </p>
+        <p>
+            <input type="checkbox" name="users_fltr_nobio" id="nobio" value="yes" %(`{if(test -f $dir/fltr/nobio) echo 'checked="yes"'}%)>
+            <label for="nobio">Filter out profiles without bios</label>
+            <input type="checkbox" name="users_fltr_pass" id="pass" value="yes" %(`{if(test -f $dir/fltr/pass) echo 'checked="yes"'}%)>
+            <label for="pass">Filter out users that passed on you</label>
+            <br /><label>Extra filters</label>
+        </p>
 
         <p><button type="submit" name="users_submit_filters_advanced" value="yes">Submit</button></p><br />
     </fieldset>

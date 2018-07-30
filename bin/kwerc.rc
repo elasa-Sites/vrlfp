@@ -23,7 +23,7 @@ sitesdir=sites
 if(~ $HTTPS on) protocol=https
 if not protocol=http
 
- . ./etc/initrc
+. ./etc/initrc
 
 if(test -f etc/initrc.local)
     . ./etc/initrc.local

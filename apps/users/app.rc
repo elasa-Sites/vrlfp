@@ -130,6 +130,7 @@ fn users_init {
                             echo ban `{cat etc/users/$user/discordid} >> /var/www/kwerc/etc/roles
                         }
                         mv etc/users/$user etc/banned/
+                        date -n | awk '{ print ($1 + 2592000) }' > etc/banned/$user/expiry
 
                         notify_success='Success! The user has been banned and notified.'
                     }
@@ -547,7 +548,7 @@ fn users_init {
                 reset=`{genid 32}
                 mkdir etc/reset/$reset
                 echo $post_arg_users_forgot_user > etc/reset/$reset/user
-                date -nu | awk '{ print ($1 + 86400) }' > etc/reset/$reset/expiry
+                date -n | awk '{ print ($1 + 86400) }' > etc/reset/$reset/expiry
 
                 if(test -f $sitedir/_kwerc/mail/reset)
                     body=$sitedir/_kwerc/mail/reset
@@ -576,7 +577,7 @@ fn users_init {
             _status='Invalid or already-used reset code. Check the link or try resetting again. Someone else may have reset your password. If you suspect this is the case, contact <a href="mailto:security@'$SERVER_NAME'">security@'$SERVER_NAME'</a>.'
             dprint $logged_user attempted to use invalid password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
-        if not if(~ `{awk '{ print ($1 < '`{date -nu}^') }' < $rdir/expiry} 1) {
+        if not if(~ `{awk '{ print ($1 < '`{date -n}^') }' < $rdir/expiry} 1) {
             _status='Confirmation code expired.'
             dprint $logged_user attempted to use expired password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
@@ -605,7 +606,7 @@ fn users_init {
             _status='Invalid confirmation code. Check the link or try resending.'
         if not if(test -d etc/users/`{cat $cdir/user})
             _status='Your email has already been confirmed.'
-        if not if(~ `{awk '{ print ($1 < '`{date -nu}^') }' < $cdir/expiry} 1)
+        if not if(~ `{awk '{ print ($1 < '`{date -n}^') }' < $cdir/expiry} 1)
             _status='Confirmation code expired.'
         if not {
             mv etc/unconfirmed/`{cat $cdir/user} etc/users/
@@ -686,7 +687,7 @@ fn email_new_user {
     confirm=`{genid 32}
     mkdir etc/confirm/$confirm
     echo $user > etc/confirm/$confirm/user
-    date -nu | awk '{ print ($1 + 86400) }' > etc/confirm/$confirm/expiry
+    date -n | awk '{ print ($1 + 86400) }' > etc/confirm/$confirm/expiry
 
     if(test -f $sitedir/_kwerc/mail/confirm)
         body=$sitedir/_kwerc/mail/confirm

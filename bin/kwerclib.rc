@@ -87,8 +87,8 @@ fn auth_user {
                 echo $sessionid > etc/users/$username/session
                 mkdir etc/sessions/$sessionid
                 echo $username > etc/sessions/$sessionid/name
-                date -nu | awk '{ print ($1 + 1800) }' > etc/sessions/$sessionid/expiry
-                date -nu | awk '{ print ($1 + 86400) }' > etc/sessions/$sessionid/expiryabs
+                date -n | awk '{ print ($1 + 1800) }' > etc/sessions/$sessionid/expiry
+                date -n | awk '{ print ($1 + 86400) }' > etc/sessions/$sessionid/expiryabs
                 logged_user=$username
                 dprint $logged_user logged in from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
 
@@ -107,11 +107,11 @@ fn auth_user {
     if not if(~ $#* 1) {
         sdir=etc/sessions/$1
         if(! test -d $sdir ||
-           ~ `{awk '{ print ($1 < '`{date -nu}^') }' < $sdir/expiry} ||
-           ~ `{awk '{ print ($1 < '`{date -nu}^') }' < $sdir/expiryabs})
+           ~ `{awk '{ print ($1 < '`{date -n}^') }' < $sdir/expiry} ||
+           ~ `{awk '{ print ($1 < '`{date -n}^') }' < $sdir/expiryabs})
             _status='Session expired.'
         if not {
-            date -nu | awk '{ print ($1 + 1800) }' > etc/sessions/$1/expiry
+            date -n | awk '{ print ($1 + 1800) }' > etc/sessions/$1/expiry
             logged_user=`{cat etc/sessions/$1/name}
         }
     }

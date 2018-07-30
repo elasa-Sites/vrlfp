@@ -283,7 +283,7 @@ fn ll_addh {
 NEW_LINE='
 '
 
-# crop_text [max_lenght [ellipsis]] 
+# crop_text [max_length [ellipsis]] 
 # TODO: Option to crop only at word-delimiters.
 fn crop_text {
     m=512

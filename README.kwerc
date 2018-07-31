@@ -37,6 +37,8 @@ Requirements:
 * sendmail(1) configured to send
 * Docker (to sandbox GraphicsMagick for thumbnail generation)
 * sudo with the following rule: <kwerc's user> ALL=(ALL) NOPASSWD: /var/www/kwerc/bin/genthumb.rc
+* csso-cli
+* UglifyJS
 
 Instructions:
 

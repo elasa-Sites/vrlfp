@@ -53,6 +53,10 @@ comments apps) make sure all files under sites/ are writable by the user your
 cgi will run as, usually www-data, for example by doing: chown -R :www-data
 sites/; chmod -R g+w sites/
 
+Copy your plan9port rc and awk to /bin:
+
+    cp $PLAN9/bin/rc $PLAN9/bin/awk /bin/
+
 Run ./INSTALL to build the Golang Markdown parser and security programs.
 
 Upgrade GraphicsMagick:
@@ -82,10 +86,6 @@ templates and included files you can store your own version of the files in lib/
 under sites/example.com/_werc/lib.
 
 Set $plan9port in etc/initrc.local.
-
-Copy your plan9port rc and awk to /bin:
-
-    cp $PLAN9/bin/rc $PLAN9/bin/awk /bin/
 
 There is a sample site with a minimal Material Design stylesheet and layout
 under sites/example.com. Feel free to use it as a tempalte for your own site.

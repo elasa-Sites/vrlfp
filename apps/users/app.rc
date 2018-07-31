@@ -298,7 +298,9 @@ fn users_init {
                     while(test -f /tmp/kwerc_thumb) sleep 1
                     rm -rf /tmp/kwerc_thumb
                     cp $sitedir/img/users/$logged_user/$count.$ext /tmp/kwerc_thumb
+                    chmod o+w /tmp/kwerc_thumb
                     sudo /var/www/kwerc/bin/genthumb.rc
+                    chmod o-w /tmp/kwerc_thumb
                     mv /tmp/kwerc_thumb $sitedir/img/users/thumbs/$logged_user/$count.$ext
                 }
                 if not {
@@ -311,7 +313,9 @@ fn users_init {
                     while(test -f /tmp/kwerc_thumb) sleep 1
                     rm -rf /tmp/kwerc_thumb
                     cp $sitedir/img/users/nsfw/$logged_user/$count.$ext /tmp/kwerc_thumb
+                    chmod o+w /tmp/kwerc_thumb
                     sudo /var/www/kwerc/bin/genthumb.rc
+                    chmod o-w /tmp/kwerc_thumb
                     mv /tmp/kwerc_thumb $sitedir/img/users/nsfw/thumbs/$logged_user/$count.$ext
                 }
             }

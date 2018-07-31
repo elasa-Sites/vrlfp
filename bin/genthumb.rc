@@ -1,2 +1,2 @@
 #/bin/rc
-docker run -v /tmp/kwerc_thumb:/tmp/kwerc_thumb rafakato/alpine-graphicsmagick gm mogrify -resize 200x200 -unsharp 1x0.5x0.7x0 /tmp/kwerc_thumb
+docker run -u nobody -v /tmp/kwerc_thumb:/tmp/kwerc_thumb rafakato/alpine-graphicsmagick gm mogrify -resize 200x200 -unsharp 1x0.5x0.7x0 /tmp/kwerc_thumb

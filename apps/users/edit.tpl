@@ -331,8 +331,9 @@
     <input type="text" name="users_sketchfab" id="sketchfab" value="%(`{if(test -s $dir/sketchfab) escape_html < $dir/sketchfab}%)">
     <label for="sketchfab">Sketchfab 3D model ID (upload your avatar <a href="https://sketchfab.com/" target="_blank">here</a> and copy the 32 character ID from your model URL)</label>
 % }
-% if not
+% if not {
     <p><a href="/premium">VRLFP Premium</a> users can embed a 3D model of their avatar on their profile.</p>
+% }
 
     <p><button type="submit" name="users_submit" value="yes">Submit</button></p><br />
 </form>

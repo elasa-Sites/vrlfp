@@ -231,7 +231,7 @@ if(test -s $dir/age || test -s $dir/location || test -s $dir/gender ||
     echo '<ul>'
 if(test -s $dir/dob) {
     echo '    <li><p><strong>Age:</strong>'
-    echo `{sed 's,-,,g' < $dir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'
+    echo `{sed 's,-,,g' < $dir/dob} `{yyyymmdd `{date -u | sed 's/  / 0/'}} | awk '{ print (int(($2 - $1) / 10000)) }'
     echo '    </p></li>'
 }
 if not if(test -s $dir/age) {

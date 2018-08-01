@@ -170,10 +170,10 @@ fn users_init {
                         if(~ $ok no) skip=yes
                     }
                     if(test -f etc/users/$logged_user/fltr/minage &&
-                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/minage} | awk '{ print ($1 >= $2) }'} 0)
+                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u | sed 's/  / 0/'}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/minage} | awk '{ print ($1 >= $2) }'} 0)
                         skip=yes
                     if not if(test -f etc/users/$logged_user/fltr/maxage &&
-                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/maxage} | awk '{ print ($1 <= $2) }'} 0)
+                       ~ `{echo `{echo `{sed 's,-,,g' < $userdir/dob} `{yyyymmdd `{date -u | sed 's/  / 0/'}} | awk '{ print (int(($2 - $1) / 10000)) }'} `{cat etc/users/$logged_user/fltr/maxage} | awk '{ print ($1 <= $2) }'} 0)
                         skip=yes
                     if not if(test -f etc/users/$logged_user/fltr/nobio && ! test -s $userdir/bio)
                         skip=yes
@@ -208,7 +208,7 @@ fn users_init {
                    ~ `{echo $"post_arg_users_dob | sed 's/^.*-(.*)-.*$/\1/' | awk '{ print ($1 >= 1 && $1 <= 12) }'} 1 &&
                    ~ `{echo $"post_arg_users_dob | sed 's/^.*-.*-(.*)$/\1/' | awk '{ print ($1 >= 1 && $1 <= 31) }'} 1) {
                     dob=`{echo $"post_arg_users_dob | sed 's,/,,g'}
-                    now=`{yyyymmdd `{date -u}}
+                    now=`{yyyymmdd `{date -u | sed 's/  / 0/'}}
                     if(~ `{echo $dob $now | awk '{ print ($1 < $2 - 180000) }'} 1) {
                         echo -n $post_arg_users_dob > $dir/dob
                         rm $dir/age
@@ -645,7 +645,7 @@ fn validate_new_user {
        ~ `{echo $"dob | sed 's/^.*-(.*)-.*$/\1/' | awk '{ print ($1 >= 1 && $1 <= 12) }'} 1 &&
        ~ `{echo $"dob | sed 's/^.*-.*-(.*)$/\1/' | awk '{ print ($1 >= 1 && $1 <= 31) }'} 1) {
         dob=`{echo $"dob | sed 's,-,,g'}
-        now=`{yyyymmdd `{date -u}}
+        now=`{yyyymmdd `{date -u | sed 's/  / 0/'}}
         if(~ `{echo $dob $now | awk '{ print ($1 < $2 - 180000) }'} 0)
             _status=($_status 'You must be at least 18 years of age to use this website.')
     }

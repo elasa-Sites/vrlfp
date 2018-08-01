@@ -57,9 +57,9 @@ fn users_init {
                         if(! ~ $"post_arg_users_decision pass &&
                            grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
                             sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' < $sitedir/_kwerc/mail/mutual |
-                                sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$logged_user/email}
+                                sendmail -ir $noreply -F $siteTitle `{cat etc/users/$logged_user/email}
                             sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' < $sitedir/_kwerc/mail/mutual |
-                                sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email}
+                                sendmail -ir $noreply -F $siteTitle `{cat etc/users/$user/email}
                         }
                     }
 
@@ -88,7 +88,7 @@ fn users_init {
                         echo Subject: `{basename $req_path} has three votes to ban > /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
                         echo https://vrlfp.net/user/`{basename $req_path} >> /tmp/kwerc_mail
-                        sendmail -ir noreply@$SERVER_NAME -F $siteTitle moderation@vrlfp.net < /tmp/kwerc_mail
+                        sendmail -ir $noreply -F $siteTitle $moderation < /tmp/kwerc_mail
                         rm /tmp/kwerc_mail
                     }
                 }
@@ -107,7 +107,7 @@ fn users_init {
                         user=`{basename $req_path}
 
                         echo Subject: Your VRLFP account has been deactivated > /tmp/kwerc_mail
-                        echo Reply-To: moderation@$SERVER_NAME >> /tmp/kwerc_mail
+                        echo Reply-To: $moderation >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
                         echo Hi $user, >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
@@ -121,7 +121,7 @@ fn users_init {
                         echo Moderator >> /tmp/kwerc_mail
                         echo VRLFP >> /tmp/kwerc_mail
                         echo https://vrlfp.net/ >> /tmp/kwerc_mail
-                        sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/users/$user/email} < /tmp/kwerc_mail
+                        sendmail -ir $noreply -F $siteTitle `{cat etc/users/$user/email} < /tmp/kwerc_mail
                         rm /tmp/kwerc_mail
 
                         if(test -f etc/users/$user/discordid) {
@@ -529,7 +529,7 @@ fn users_init {
                 echo https://vrlfp.net/user/$post_arg_users_report_user >> /tmp/kwerc_mail
                 echo >> /tmp/kwerc_mail
                 echo $"post_arg_users_report_details | escape_html >> /tmp/kwerc_mail
-                sendmail -ir noreply@$SERVER_NAME -F $siteTitle moderation@vrlfp.net < /tmp/kwerc_mail
+                sendmail -ir $noreply -F $siteTitle $moderation < /tmp/kwerc_mail
                 rm /tmp/kwerc_mail
                 notify_success='You report has been sent. Our moderation team will review it as soon as possible. Thank you for keeping VRLFP safe!'
             }
@@ -559,8 +559,8 @@ fn users_init {
                 if not
                     body=etc/mail/reset
 
-                sed 's,\$resetLink,'$base_url'/reset/'$reset',g; s,\$siteTitle,'$siteTitle',g; s,\$replyTo,security@'$SERVER_NAME',g' < $body |
-                    sendmail -ir noreply@$SERVER_NAME -F $siteTitle $post_arg_users_forgot_email
+                sed 's,\$resetLink,'$base_url'/reset/'$reset',g; s,\$siteTitle,'$siteTitle',g; s,\$replyTo,'$security',g' < $body |
+                    sendmail -ir $noreply -F $siteTitle $post_arg_users_forgot_email
 
                 notify_success='Success! Check your email for a link to reset your password.'
                 dprint $logged_user sent password reset request from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
@@ -578,7 +578,7 @@ fn users_init {
         rdir=etc/reset/`{basename $req_path}
 
         if(! test -d $rdir) {
-            _status='Invalid or already-used reset code. Check the link or try resetting again. Someone else may have reset your password. If you suspect this is the case, contact <a href="mailto:security@'$SERVER_NAME'">security@'$SERVER_NAME'</a>.'
+            _status='Invalid or already-used reset code. Check the link or try resetting again. Someone else may have reset your password. If you suspect this is the case, contact <a href="mailto:'$security'">'$security'</a>.'
             dprint $logged_user attempted to use invalid password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
         if not if(~ `{awk '{ print ($1 < '`{date -n}^') }' < $rdir/expiry} 1) {
@@ -699,5 +699,5 @@ fn email_new_user {
         body=etc/mail/confirm
 
     sed 's,\$confirmLink,'$base_url'/confirm/'$confirm',g; s,\$siteTitle,'$siteTitle',g' < $body |
-        sendmail -ir noreply@$SERVER_NAME -F $siteTitle `{cat etc/unconfirmed/$user/email}
+        sendmail -ir $noreply -F $siteTitle `{cat etc/unconfirmed/$user/email}
 }

@@ -31,3 +31,8 @@ enabled_apps=()
 #masterSite=example.com # Not required!
 #siteTitle='example site'
 #siteSubTitle='my beautiful website'
+
+# Email addresses
+noreply=noreply@$SERVER_NAME
+moderation=moderation@$SERVER_NAME
+security=security@$SERVER_NAME

@@ -225,7 +225,7 @@ if(! ~ $"logged_user '' &&
 %     }
 %     if(test -f etc/users/$"logged_user/nsfw) {
 %         for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n}) {
-    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" />
+    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" /></a>
 %         }
 %     }
 % }
@@ -235,7 +235,7 @@ if(! ~ $"logged_user '' &&
 %     }
 %     if(test -f etc/users/$"logged_user/nsfw) {
 %         for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n | sed q}) {
-    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" />
+    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" /></a>
 %         }
 %     }
 % }

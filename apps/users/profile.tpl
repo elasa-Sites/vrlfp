@@ -174,19 +174,19 @@ if(! ~ $"logged_user '' &&
 % if(test -f $dir/premium) {
 %     for(i in `{ls -p $sitedir/img/users/$user | sort -n}) {
 %         if(test -f $sitedir/img/users/thumbs/$user/$i) {
-    <img src="/img/users/thumbs/%($user%)/%($i%)" onclick="window.location='/img/users/%($user%)/%($i%)'" />
+    <img src="/img/users/thumbs/%($user%)/%($i%)" onclick="window.location='#img%($i%)'" />
 %         }
 %         if not {
-    <img src="/img/users/%($user%)/%($i%)" onclick="window.location='/img/users/%($user%)/%($i%)'" />
+    <img src="/img/users/%($user%)/%($i%)" onclick="window.location='#img%($i%)'" />
 %         }
 %     }
 %     for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n}) {
 %         if(test -f etc/users/$"logged_user/nsfw) {
 %             if(test -f $sitedir/img/users/nsfw/thumbs/$user/$i) {
-    <img src="/img/users/nsfw/thumbs/%($user%)/%($i%)" onclick="window.location='/img/users/nsfw/%($user%)/%($i%)'" class="nsfw" />
+    <img src="/img/users/nsfw/thumbs/%($user%)/%($i%)" onclick="window.location='#nsfw%($i%)'" class="nsfw" />
 %             }
 %             if not {
-    <img src="/img/users/nsfw/%($user%)/%($i%)" onclick="window.location='/img/users/nsfw/%($user%)/%($i%)'" class="nsfw" />
+    <img src="/img/users/nsfw/%($user%)/%($i%)" onclick="window.location='#nsfw%($i%)'" class="nsfw" />
 %             }
 %         }
 %         if not {
@@ -197,23 +197,45 @@ if(! ~ $"logged_user '' &&
 % if not {
 %     for(i in `{ls -p $sitedir/img/users/$user | sort -n | sed 4q}) {
 %         if(test -f $sitedir/img/users/thumbs/$user/$i) {
-    <img src="/img/users/thumbs/%($user%)/%($i%)" onclick="window.location='/img/users/%($user%)/%($i%)'" />
+    <img src="/img/users/thumbs/%($user%)/%($i%)" onclick="window.location='#img%($i%)'" />
 %         }
 %         if not {
-    <img src="/img/users/%($user%)/%($i%)" onclick="window.location='/img/users/%($user%)/%($i%)'" />
+    <img src="/img/users/%($user%)/%($i%)" onclick="window.location='#img%($i%)'" />
 %         }
 %     }
 %     for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n | sed q}) {
 %         if(test -f etc/users/$"logged_user/nsfw) {
 %             if(test -f $sitedir/img/users/nsfw/thumbs/$user/$i) {
-    <img src="/img/users/nsfw/thumbs/%($user%)/%($i%)" onclick="window.location='/img/users/nsfw/%($user%)/%($i%)'" class="nsfw" />
+    <img src="/img/users/nsfw/thumbs/%($user%)/%($i%)" onclick="window.location='#nsfw%($i%)'" class="nsfw" />
 %             }
 %             if not {
-    <img src="/img/users/nsfw/%($user%)/%($i%)" onclick="window.location='/img/users/nsfw/%($user%)/%($i%)'" class="nsfw" />
+    <img src="/img/users/nsfw/%($user%)/%($i%)" onclick="window.location='#nsfw%($i%)'" class="nsfw" />
 %             }
 %         }
 %         if not {
     <img src="/img/nsfw.png" onclick="window.location='/settings'" />
+%         }
+%     }
+% }
+</div>
+<div class="lightbox">
+% if(test -f $dir/premium) {
+%     for(i in `{ls -p $sitedir/img/users/$user | sort -n}) {
+    <a href="#_" id="img%($i%)"><img src="/img/users/%($user%)/%($i%)" /></a>
+%     }
+%     if(test -f etc/users/$"logged_user/nsfw) {
+%         for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n}) {
+    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" />
+%         }
+%     }
+% }
+% if not {
+%     for(i in `{ls -p $sitedir/img/users/$user | sort -n | sed 4q}) {
+    <a href="#_" id="img%($i%)"><img src="/img/users/%($user%)/%($i%)" /></a>
+%     }
+%     if(test -f etc/users/$"logged_user/nsfw) {
+%         for(i in `{ls -p $sitedir/img/users/nsfw/$user | sort -n | sed q}) {
+    <a href="#_" id="nsfw%($i%)"><img src="/img/users/nsfw/%($user%)/%($i%)" />
 %         }
 %     }
 % }

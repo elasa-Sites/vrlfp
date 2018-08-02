@@ -325,6 +325,34 @@ input.card {
     padding: 0;
 }
 
+.lightbox a {
+    z-index: 20;
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.lightbox a img {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    max-width: 90%;
+    max-height: 80%;
+}
+
+.lightbox a:target {
+    outline: none;
+    display: block;
+}
+
 .sitemap-list {
     text-transform: capitalize;
 }

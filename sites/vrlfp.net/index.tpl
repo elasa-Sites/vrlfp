@@ -26,7 +26,7 @@
 <h2>Press</h2>
 <ul>
     <li><p><a href="http://www.dazeddigital.com/science-tech/article/40892/1/vrchat-sex-love-virtual-reality-affairs-and-relationships" target="_blank">Dazed Digital</a></p></li>
-    <li><p><a href="/img/virtualweekality.png" target="_blank">Virtual Week-ality<a></p></li>
+    <li><p><a href="/img/virtualweekality.png" target="_blank">Virtual Week-ality</a></p></li>
 </ul>
 
 <div class="polaroids nolink">

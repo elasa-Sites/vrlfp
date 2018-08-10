@@ -1,83 +1,158 @@
-<h1>Matches</h1>
+<h1>%(`{tl matches}%)</h1>
 
 %{
 if(check_user) {
-    if(! check_user premium)
-        echo '<p><a href="/premium">Get VRLFP Premium</a> to see who likes you before you match.</a></p><br />'
+    if(! check_user premium) {
+        echo -n '<p>'
+        tl premium_matches
+        echo '</p><br />'
+    }
 
     for(user in `{cat etc/users/$logged_user/date})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/date)
-            echo '<p>✔ It''s a match! <a href="/user/'$user'">'$user'</a> wants to date you too.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/date) {
+            echo -n '<p>✔ '
+            tl its_a_match
+            echo -in ' <a href="/user/'$user'">'$user'</a> '
+            tl wants_date_too
+            echo '</p>'
+        }
     for(user in `{cat etc/users/$logged_user/hookup})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/hookup)
-            echo '<p>✔ It''s a match! <a href="/user/'$user'">'$user'</a> wants to hook up with you too.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/hookup) {
+            echo -n '<p>✔ '
+            tl its_a_match
+            echo -n ' <a href="/user/'$user'">'$user'</a> '
+            tl wants_hookup_too
+            echo '</p>'
+        }
     for(user in `{cat etc/users/$logged_user/friend})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/friend)
-            echo '<p>✔ It''s a match! <a href="/user/'$user'">'$user'</a> wants to be your homie too.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/friend) {
+            echo -n '<p>✔ '
+            tl its_a_match
+            echo -n ' <a href="/user/'$user'">'$user'</a> '
+            tl wants_homie_too
+            echo '</p>'
+        }
 
     for(user in `{cat etc/users/$logged_user/hookup etc/users/$logged_user/friend})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/date)
-            echo '<p><a href="/user/'$user'">'$user'</a> wants to date you.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/date) {
+            echo -n '<p><a href="/user/'$user'">'$user'</a> '
+            tl wants_date
+            echo '</p>'
+        }
     for(user in `{cat etc/users/$logged_user/date etc/users/$logged_user/friend})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/hookup)
-            echo '<p><a href="/user/'$user'">'$user'</a> wants to hook up with you.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/hookup) {
+            echo -n '<p><a href="/user/'$user'">'$user'</a> '
+            tl wants_hookup
+            echo '</p>'
+        }
     for(user in `{cat etc/users/$logged_user/date etc/users/$logged_user/hookup})
         if(test -s etc/users/$user/password &&
-           grep -q '^'$logged_user^'$' etc/users/$user/friend)
-            echo '<p><a href="/user/'$user'">'$user'</a> wants to be your homie.</p>'
+           grep -q '^'$logged_user^'$' etc/users/$user/friend) {
+            echo -n '<p><a href="/user/'$user'">'$user'</a> '
+            tl wants_homie
+            echo '</p>'
+        }
 
     if(check_user premium) {
-        echo '<h1>They like you!</h1>'
+        echo -n '<h1>'
+        tl they_like_you
+        echo '</h1>'
         for(user in `{grep '^'$logged_user^'$' etc/users/*/date | sed 's,etc/users/(.*)/date.*,\1,'})
             if(! grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend) {
-                if(grep -q '^'$user^'$' etc/users/$logged_user/pass)
-                    echo '<p><del><a href="/user/'$user'">'$user'</a> wants to date you.</del> <strong>PASSED</strong></p>'
-                if not
-                    echo '<p><a href="/user/'$user'">'$user'</a> wants to date you.</p>'
+                if(grep -q '^'$user^'$' etc/users/$logged_user/pass) {
+                    echo -n '<p><del><a href="/user/'$user'">'$user'</a> '
+                    tl wants_date
+                    echo -n '</del> <strong>'
+                    tl passed
+                    echo '</strong></p>'
+                }
+                if not {
+                    echo -n '<p><a href="/user/'$user'">'$user'</a> '
+                    tl wants_date
+                    echo '</p>'
+                }
             }
         for(user in `{grep '^'$logged_user^'$' etc/users/*/hookup | sed 's,etc/users/(.*)/hookup.*,\1,'})
             if(! grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend) {
-                if(grep -q '^'$user^'$' etc/users/$logged_user/pass)
-                    echo '<p><del><a href="/user/'$user'">'$user'</a> wants to hook up with you.</del> <strong>PASSED</strong></p>'
-                if not
-                    echo '<p><a href="/user/'$user'">'$user'</a> wants to hook up with you.</p>'
+                if(grep -q '^'$user^'$' etc/users/$logged_user/pass) {
+                    echo -n '<p><del><a href="/user/'$user'">'$user'</a> '
+                    tl wants_hookup
+                    echo -n '</del> <strong>'
+                    tl passed
+                    echo '</strong></p>'
+                }
+                if not {
+                    echo -n '<p><a href="/user/'$user'">'$user'</a> '
+                    tl wants_hookup
+                    echo '</p>'
+                }
             }
         for(user in `{grep '^'$logged_user^'$' etc/users/*/friend | sed 's,etc/users/(.*)/friend.*,\1,'})
             if(! grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend) {
-                if(grep -q '^'$user^'$' etc/users/$logged_user/pass)
-                    echo '<p><del><a href="/user/'$user'">'$user'</a> wants to be your homie.</del> <strong>PASSED</strong></p>'
-                if not
-                    echo '<p><a href="/user/'$user'">'$user'</a> wants to be your homie.</p>'
+                if(grep -q '^'$user^'$' etc/users/$logged_user/pass) {
+                    echo -n '<p><del><a href="/user/'$user'">'$user'</a> '
+                    tl wants_homie
+                    echo -n '</del> <strong>'
+                    tl passed
+                    echo '</strong></p>'
+                }
+                if not {
+                    echo -n '<p><a href="/user/'$user'">'$user'</a> '
+                    tl wants_homie
+                    echo '</p>'
+                }
             }
     }
 
-    echo '<h1>Future matches?</h1>'
+    echo -n '<h1>'
+    tl future_matches
+    echo '</h1>'
     for(user in `{cat etc/users/$logged_user/date})
         if(test -s etc/users/$user/password &&
-           ! grep -q '^'$logged_user^'$' etc/users/$user/date etc/users/$user/hookup etc/users/$user/friend)
-            echo '<p>You want to date <a href="/user/'$user'">'$user'</a>.</p>'
+           ! grep -q '^'$logged_user^'$' etc/users/$user/date etc/users/$user/hookup etc/users/$user/friend) {
+            echo -n '<p>'
+            tl you_want_date
+            echo ' <a href="/user/'$user'">'$user'</a>.</p>'
+        }
     for(user in `{cat etc/users/$logged_user/hookup})
         if(test -s etc/users/$user/password &&
-           ! grep -q '^'$logged_user^'$' etc/users/$user/hookup etc/users/$user/date etc/users/$user/friend)
-            echo '<p>You want to hook up with <a href="/user/'$user'">'$user'</a>.</p>'
+           ! grep -q '^'$logged_user^'$' etc/users/$user/hookup etc/users/$user/date etc/users/$user/friend) {
+            echo -n '<p>'
+            tl you_want_hookup
+            echo ' <a href="/user/'$user'">'$user'</a>.</p>'
+        }
     for(user in `{cat etc/users/$logged_user/friend})
         if(test -s etc/users/$user/password &&
-           ! grep -q '^'$logged_user^'$' etc/users/$user/friend etc/users/$user/date etc/users/$user/hookup)
-            echo '<p>You want to be friends with <a href="/user/'$user'">'$user'</a>.</p>'
+           ! grep -q '^'$logged_user^'$' etc/users/$user/friend etc/users/$user/date etc/users/$user/hookup) {
+            echo -n '<p>'
+            tl you_want_homie
+            echo ' <a href="/user/'$user'">'$user'</a>.</p>'
+        }
 
-    echo '<h1>Passes</h1>'
-    echo '<p><em>It''s not too late to change your mind!</em></p>'
+    echo -n '<h1>'
+    tl passes
+    echo '</h1>'
+    echo -n '<p><em>'
+    tl passes_info
+    echo '</em></p>'
     for(user in `{cat etc/users/$logged_user/pass})
-        if(test -s etc/users/$user/password)
-            echo '<p>You passed on <a href="/user/'$user'">'$user'</a>.</p>'
-    echo '<form action="" method="POST"><button name="clearpasses" value="yes">Clear all passes</button></form>'
+        if(test -s etc/users/$user/password) {
+            echo -n '<p>'
+            tl you_passed
+            echo ' <a href="/user/'$user'">'$user'</a>.</p>'
+        }
+    echo -n '<form action="" method="POST"><button name="clearpasses" value="yes">'
+    tl clear_passes
+    echo '</button></form>'
 }
 if not {
-    echo '<a href="/login?redirect=/matches" class="btn">Login</a>'
+    echo -n '<a href="/login?redirect=/matches" class="btn">'
+    tl login
+    echo '</a>'
 }
 %}

@@ -83,13 +83,13 @@ fn dir_listing_handler {
 
 fn notices_handler {
     for(type in notify_errors notify_notes notify_success)
-        for(n in $$type)
-            if(! echo $n | grep -s 'no match') {
-                echo -n '<p class="'$type'">'
-                if(~ $type notify_errors) echo -n '✘ '
-                if not if(~ $type notify_success) echo -n '✔ '
-                echo $"n'</div>'
-            }
+        if(! ~ $$"type '' && ! echo $$"n | grep -s 'no match') {
+            echo -n '<p class="'$type'">'
+            if(~ $type notify_errors) echo -n '✘ '
+            if not if(~ $type notify_success) echo -n '✔ '
+            echo -n $$type
+            echo '</p>'
+        }
 }
 
 fn setup_handlers {

@@ -1,5 +1,5 @@
-<h1>Confirm your email</h1>
+<h1>%(`{tl confirm_your_email}%)</h1>
 
 % notices_handler
 
-<p><a href="/login" class="btn">Login</a></p>
+<p><a href="/login" class="btn">%(`{tl login}%)</a></p>

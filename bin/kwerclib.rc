@@ -74,13 +74,13 @@ fn auth_user {
 
         if(! test -s etc/users/$username/password ||
            ! ~ `{checkhash `{cat etc/users/$username/password} $password} true) {
-            _status='Wrong username or password.'
+            _status=`{tl wrong_user_pass}
             dprint Failed login to $username from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
         if not {
             sessionid=`{genid 32}
             if(~ $sessionid -1) {
-                _status='Session creation failed.'
+                _status=`{tl session_fail}
                 dprint $_status
             }
             if not {
@@ -398,6 +398,10 @@ fn datet {
 
 fn yyyymmdd {
     echo $* | sed 's/....(...).(..)..............(....)/\3\1\2/; s/Jan/01/; s/Feb/02/; s/Mar/03/; s/Apr/04/; s/May/05/; s/Jun/06/; s/Jul/07/; s/Aug/08/; s/Sep/09/; s/Oct/10/; s/Nov/11/; s/Dec/12/'
+}
+
+fn tl {
+    cat etc/translations/$lang/$1
 }
 
 ##########################################################################

@@ -1,8 +1,8 @@
 % if(check_user) {
-<h1>You've seen everyone!</h1>
-<p>Wish there were more people on here? Share VRLFP with your friends!</p>
-<a href="/matches" class="btn">Check out your matches</a>
+<h1>%(`{tl seen_everyone}%)</h1>
+<p>%(`{tl seen_everyone_info}%)</p>
+<a href="/matches" class="btn">%(`{tl check_matches}%)</a>
 % }
 % if not {
-<a href="/login?redirect=/random" class="btn">Login</a>
+<a href="/login?redirect=/random" class="btn">%(`{tl login}%)</a>
 % }

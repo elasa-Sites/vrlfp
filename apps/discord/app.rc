@@ -14,10 +14,10 @@ fn discord_init {
                 echo $did > $dir/discordid
                 echo nick $did $logged_user >> etc/roles
                 discord_roles $did $dir
-                notify_success='Success! Check your Discord roles and message @Administrator if they''re missing. They will take up to a minute to sync.'
+                notify_success=`{tl discord_success}
             }
             if not
-                notify_error='Authentication failed. Did you give kotori the right username?'
+                notify_error=`{tl discord_fail}
         }
     }
 }

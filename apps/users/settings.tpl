@@ -1,4 +1,4 @@
-<h1>Manage Account</h1>
+<h1>%(`{tl manage_account}%)</h1>
 
 % notices_handler
 
@@ -7,10 +7,10 @@
 %     if(test -f $dir/premium) premium=yes
 %     if not premium=no
 
-<p><a href="/user/%($logged_user%)" class="btn">Back to profile</a></p><br />
+<p><a href="/user/%($logged_user%)" class="btn">%(`{tl back_to_profile}%)</a></p><br />
 
 <form action="" method="POST">
-    <h5>Profile filtering (basic)</h5>
+    <h5>%(`{tl profile_filtering}%) (%(`{tl basic}%))</h5>
     <p>
         <input type="checkbox" name="users_fltr_lookingfor_Looking_For_Date" id="date" value="yes" %(`{if(test -s $dir/fltr/lookingfor && grep -s '^Looking_For_Date$' $dir/fltr/lookingfor) echo 'checked="yes"'}%)>
         <label for="date">Looking For Date</label>
@@ -76,13 +76,15 @@
 
 <form action="" method="POST">
     <fieldset style="border: none" %(`{if(~ $premium no) echo 'disabled'}%)>
-        <h5>Profile filtering (advanced)</h5>
-% if(~ $premium no) echo '<p>You need <a href="/premium">VRLFP Premium</a> to modify your advanced profile filters.</p>'
+        <h5>%(`{tl profile_filtering}%) (%(`{tl advanced}%))</h5>
+% if(~ $premium no) {
+        <p>%(`{tl premium_filter}%)</p>
+% }
         <input type="text" name="users_fltr_minage" id="minage" value="%(`{if(test -s $dir/fltr/minage) cat $dir/fltr/minage}%)">
-        <label for="minage">Minimum age</label>
+        <label for="minage">%(`{tl min_age}%)</label>
 
         <input type="text" name="users_fltr_maxage" id="maxage" value="%(`{if(test -s $dir/fltr/maxage) cat $dir/fltr/maxage}%)">
-        <label for="maxage">Maximum age</label>
+        <label for="maxage">%(`{tl max_age}%)</label>
 
         <br /><br /><p>
             <input type="checkbox" name="users_fltr_mute_Not_Mute" id="mute_not_mute" value="yes" %(`{if(test -s $dir/fltr/mute && grep -s '^Not_Mute$' $dir/fltr/mute) echo 'checked="yes"'}%)>
@@ -295,54 +297,54 @@
             <br /><label>Extra filters</label>
         </p>
 
-        <p><button type="submit" name="users_submit_filters_advanced" value="yes">Submit</button></p><br />
+        <p><button type="submit" name="users_submit_filters_advanced" value="yes">%(`{tl submit}%)</button></p><br />
     </fieldset>
 </form>
 
 <form action="" method="POST">
-    <h5>Settings</h5>
+    <h5>%(`{tl settings}%)</h5>
     <p>
         <input type="checkbox" name="users_nsfw" id="nsfw" value="yes" %(`{if(test -f $dir/nsfw) echo 'checked="yes"'}%)>
-        <label for="nsfw">Show NSFW profile images?</label>
+        <label for="nsfw">%(`{tl show_nsfw}%)</label>
     </p>
 
-    <p><button type="submit" name="users_submit_settings" value="yes">Submit</button></p><br />
+    <p><button type="submit" name="users_submit_settings" value="yes">%(`{tl submit}%)</button></p><br />
 </form>
 
 <form action="" method="POST">
-    <h5>Change your email address</h5>
+    <h5>%(`{tl change_email}%)</h5>
     <input type="email" name="users_email" id="email" value="%(`{escape_html < $dir/email}%)">
-    <label for="email">E-mail</label>
+    <label for="email">%(`{tl email}%)</label>
 
     <input type="password" name="users_pass" id="pass">
-    <label for="pass">Confirm password</label>
+    <label for="pass">%(`{tl confirm_pass}%)</label>
 
-    <p><button type="submit" name="users_submit_email" value="yes">Submit</button></p><br />
+    <p><button type="submit" name="users_submit_email" value="yes">%(`{tl submit}%)</button></p><br />
 </form>
 
 <form action="" method="POST">
-    <h5>Change your password</h5>
+    <h5>%(`{tl change_pass}%)</h5>
     <input type="password" name="users_passold" id="passold">
-    <label for="pass">Current password</label>
+    <label for="pass">%(`{tl current_pass}%)</label>
 
     <input type="password" name="users_pass" id="pass1">
-    <label for="pass1">New password</label>
+    <label for="pass1">%(`{tl new_pass}%)</label>
 
     <input type="password" name="users_pass2" id="pass2">
-    <label for="pass2">Repeat new password</label>
+    <label for="pass2">%(`{tl repeat_new_pass}%)</label>
 
-    <p><button type="submit" name="users_submit_password" value="yes">Submit</button></p><br />
+    <p><button type="submit" name="users_submit_password" value="yes">%(`{tl submit}%)</button></p><br />
 </form>
 
 <form action="" method="POST">
-    <h5>Delete your account</h5>
-    <p>Be careful! This is permanent.</p>
+    <h5>%(`{tl del_account}%)</h5>
+    <p>%(`{tl del_account_info}%)</p>
     <input type="password" name="users_pass" id="pass3">
-    <label for="pass3">Confirm password</label>
+    <label for="pass3">%(`{tl confirm_pass}%)</label>
 
-    <p><button type="submit" name="users_submit_delete" value="yes">Delete</button></p><br />
+    <p><button type="submit" name="users_submit_delete" value="yes">%(`{tl delete}%)</button></p><br />
 </form>
 % }
 % if not {
-    <p><a href="/login?redirect=/settings" class="btn">Login</a></p>
+    <p><a href="/login?redirect=/settings" class="btn">%(`{tl login}%)</a></p>
 % }

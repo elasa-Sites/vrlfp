@@ -23,16 +23,15 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/activate.tpl apps/users/activate.tpl})
 
         if(~ $REQUEST_METHOD POST) {
-            _status=''
             if(~ $"post_arg_username '' ||
                ! test -s etc/deactivated/$"post_arg_username/password ||
                ! ~ `{checkhash `{cat etc/deactivated/$"post_arg_username/password} $"post_arg_password} true)
-                _status='Wrong username or password.'
+                _status=`{tl wrong_user_pass}
             if not if(! ~ $"post_arg_tos yes)
-                _status='You must be at least 18 years of age and agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a> to use this website.'
+                _status=`{tl age_terms_fail}
             if not {
                 mv etc/deactivated/$"post_arg_username etc/users/
-                notify_success='You account has been reactivated! You can now log in.'
+                notify_success=`{tl reactivate_success}
                 post_redirect $base_url/login
             }
 
@@ -56,9 +55,9 @@ fn users_init {
                         echo $user >> etc/users/$logged_user/$post_arg_users_decision
                         if(! ~ $"post_arg_users_decision pass &&
                            grep -q '^'$logged_user'$' etc/users/$user/date etc/users/$user/hookup) {
-                            sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' < $sitedir/_kwerc/mail/mutual |
+                            tl mail_mutual | sed 's,\$profileLink,'$base_url'/user/'$user',g; s,\$user,'$user',g' |
                                 sendmail -ir $noreply -F $siteTitle `{cat etc/users/$logged_user/email}
-                            sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' < $sitedir/_kwerc/mail/mutual |
+                            tl mail_mutual | sed 's,\$profileLink,'$base_url'/user/'$logged_user',g; s,\$user,'$logged_user',g' |
                                 sendmail -ir $noreply -F $siteTitle `{cat etc/users/$user/email}
                         }
                     }
@@ -98,31 +97,37 @@ fn users_init {
                 if not if(~ $"post_arg_users_submit_ban yes && check_user mod &&
                           ~ `{wc -l < etc/users/`{basename $req_path}^/banyes | awk '{ print ($1 >= 3) }'} 1 || check_user headmod &&
                           ! ~ `{wc -l < etc/users/`{basename $req_path}^/banno | awk '{ print ($1 >= 1) }'} 1 || check_user headmod) {
-                    _status=()
                     if(~ $"post_arg_users_ban_reason '')
-                        _status='Missing reason.'
+                        _status=`{tl missing_reason}
                     if not if(! test -s etc/users/`{basename $req_path}^/password)
-                        _status='No such user.'
+                        _status=`{tl no_such_user}
                     if not {
                         user=`{basename $req_path}
+                        oldlang=$lang
+                        if(test -f etc/users/$user/lang)
+                            lang=`{cat etc/users/$user/lang}
+                        if not
+                            lang=en
 
-                        echo Subject: Your VRLFP account has been deactivated > /tmp/kwerc_mail
+                        echo Subject: `{tl ban_subject} > /tmp/kwerc_mail
                         echo Reply-To: $moderation >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
-                        echo Hi $user, >> /tmp/kwerc_mail
+                        echo `{tl hi} $user, >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
-                        echo -n Our moderation team has found your VRLFP account in violation of our rules. Reason:' ' >> /tmp/kwerc_mail
+                        tl ban1 >> /tmp/kwerc_mail
                         echo $post_arg_users_ban_reason | escape_html >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
-                        echo Your account data will be kept for 30 days. Please reply to this message within that time if you would like to contest this moderation decision or request immediate deletion of your account. >> /tmp/kwerc_mail
+                        tl ban2 >> /tmp/kwerc_mail
                         echo >> /tmp/kwerc_mail
                         echo '-- ' >> /tmp/kwerc_mail
                         echo $logged_user >> /tmp/kwerc_mail
-                        echo Moderator >> /tmp/kwerc_mail
+                        tl moderator >> /tmp/kwerc_mail
                         echo VRLFP >> /tmp/kwerc_mail
                         echo https://vrlfp.net/ >> /tmp/kwerc_mail
                         sendmail -ir $noreply -F $siteTitle `{cat etc/users/$user/email} < /tmp/kwerc_mail
                         rm /tmp/kwerc_mail
+
+                        lang=$oldlang
 
                         if(test -f etc/users/$user/discordid) {
                             touch etc/roles
@@ -132,7 +137,7 @@ fn users_init {
                         mv etc/users/$user etc/banned/
                         date -n | awk '{ print ($1 + 2592000) }' > etc/banned/$user/expiry
 
-                        notify_success='Success! The user has been banned and notified.'
+                        notify_success=`{tl ban_success}
                     }
         
                     notify_errors=$_status
@@ -145,7 +150,7 @@ fn users_init {
 
             if(~ $"post_arg_users_resend yes) {
                 email_new_user `{basename $req_path}
-                notify_success='Sent!'
+                notify_success=`{tl sent}
             }
         }
     }
@@ -199,8 +204,7 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/edit.tpl apps/users/edit.tpl})
 
         if(! ~ $"post_arg_users_submit '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not {
                 dir=etc/users/$logged_user
 
@@ -214,7 +218,7 @@ fn users_init {
                         rm $dir/age
                     }
                     if not
-                        _status='You must be at least 18 years of age to use this website'
+                        _status=`{tl age_fail}
                 }
 
                 for(i in post_arg_users_location post_arg_users_vrc post_arg_users_discord post_arg_users_sc post_arg_users_ig post_arg_users_pubemail post_arg_users_phone post_arg_users_bio)
@@ -280,14 +284,13 @@ fn users_init {
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_picture '' && ! ~ $"post_arg_users_picture '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not {
                 ext=`{basename $post_arg_users_picture |
                       sed 's/.*\.(.*)$/\1/; s/[^a-zA-Z0-9]//g; s/jpeg/jpg/' |
                       tr 'A-Z' 'a-z'}
                 if(! ~ $ext png && ! ~ $ext jpg && ! ~ $ext gif)
-                    _status=($_status 'Filetype must be png, jpg, or gif.')
+                    _status=`{tl filetype_fail}
                 if not if(! ~ $"post_arg_users_picture_nsfw yes) {
                     if(test -s etc/users/$logged_user/piccount)
                         count=`{awk 'echo $1++' < etc/users/$logged_user/piccount}
@@ -324,16 +327,14 @@ fn users_init {
             status=$_status
         }
         if not if(~ `{echo $"post_arg_users_picture_delete | awk '{ print ($1 ~ /^[0-9]+\.(png|jpg|gif)$/) }'} 1) {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not rm $sitedir/img/users/$logged_user/$post_arg_users_picture_delete $sitedir/img/users/thumbs/$logged_user/$post_arg_users_picture_delete
 
             notify_errors=$_status
             status=$_status
         }
         if not if(~ `{echo $"post_arg_users_picture_delete_nsfw | awk '{ print ($1 ~ /^[0-9]+\.(png|jpg|gif)$/) }'} 1) {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not rm $sitedir/img/users/nsfw/$logged_user/$post_arg_users_picture_delete_nsfw $sitedir/img/users/nsfw/thumbs/$logged_user/$post_arg_users_picture_delete_nsfw
 
             notify_errors=$_status
@@ -345,8 +346,7 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/settings.tpl apps/users/settings.tpl})
 
         if(! ~ $"post_arg_users_submit_filters '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not {
                 dir=etc/users/$logged_user/fltr
 
@@ -365,9 +365,8 @@ fn users_init {
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_filters_advanced '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
-            if not if(! check_user premium) _status='You need a premium account to change your profile filters.'
+            if(! check_user) _status=`{tl not_logged}
+            if not if(! check_user premium) _status=`{tl premium_filter_fail}
             if not {
                 dir=etc/users/$logged_user/fltr
 
@@ -375,15 +374,15 @@ fn users_init {
 
                 if(! ~ $"post_arg_users_fltr_minage '') {
                     if(~ `{echo $"post_arg_users_fltr_minage | awk '{ print ($1 ~ /^[0-9]+$/) }'} 0)
-                        _status='Invalid age.'
+                        _status=`{tl invalid_age}
                     if not if(~ `{echo $"post_arg_users_fltr_minage | awk '{ print ($1 >= 18) }'} 0)
-                        _status='No.'
+                        _status=`{tl no}
                     if not
                         echo -n $post_arg_users_fltr_minage > $dir/minage
                 }
                 if(! ~ $"post_arg_users_fltr_maxage '') {
                     if(~ `{echo $"post_arg_users_fltr_maxage | awk '{ print ($1 ~ /^[0-9]+$/) }'} 0)
-                        _status='Invalid age.'
+                        _status=`{tl invalid_age}
                     if not
                         echo -n $post_arg_users_fltr_maxage > $dir/maxage
                 }
@@ -431,8 +430,7 @@ fn users_init {
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_settings '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not {
                 if(~ $"post_arg_users_nsfw yes)
                     touch etc/users/$logged_user/nsfw
@@ -444,16 +442,15 @@ fn users_init {
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_email '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not
                 if(! test -s etc/users/$logged_user/password ||
                    ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true) {
-                    _status=($_status 'Wrong password.')
+                    _status=`{tl wrong_pass}
                     dprint Failed login to $logged_user for email change from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                 }
                 if not if(~ $"post_arg_users_email '' || ~ $"post_arg_users_email `{cat etc/users/$logged_user/email})
-                    _status=($_status 'Missing or unchanged email'.)
+                    _status=`{tl unchanged_email}
                 if not {
                     dprint $logged_user changed email `{cat etc/users/$logged_user/email} to $post_arg_users_email from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                     echo $post_arg_users_email > etc/users/$logged_user/email
@@ -468,39 +465,37 @@ fn users_init {
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_password '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not
                 if(! test -s etc/users/$logged_user/password ||
                    ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_passold} true) {
-                    _status=($_status 'Wrong current password.')
+                    _status=`{tl wrong_current_pass}
                     dprint Failed login to $logged_user for password change from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                 }
                 if not if(! validate_password $logged_user $"post_arg_users_pass $"post_arg_users_pass2)
-                    _status=($_status 'New password missing, non-matching, or insecure.')
+                    _status=`{tl wrong_new_pass}
                 if not {
                     echo -n $post_arg_users_pass | genhash > etc/users/$logged_user/password
                     rm -rf etc/sessions/`{cat etc/users/$logged_user/session} etc/users/$logged_user/session
                     dprint $logged_user changed password from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
-                    notify_success='Password changed.'
+                    notify_success=`{tl pass_success}
                 }
 
             notify_errors=$_status
             status=$_status
         }
         if not if(! ~ $"post_arg_users_submit_delete '') {
-            _status=()
-            if(! check_user) _status='Not logged in.'
+            if(! check_user) _status=`{tl not_logged}
             if not
                 if(! test -s etc/users/$logged_user/password ||
                    ! ~ `{checkhash `{cat etc/users/$logged_user/password} $"post_arg_users_pass} true) {
-                    _status=($_status 'Wrong password.')
+                    _status=`{tl wrong_pass}
                     dprint Failed login to $logged_user for account deletion from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                 }
                 if not {
                     /usr/bin/sed -i '/^'$logged_user'$/d' etc/users/*/date etc/users/*/hookup etc/users/*/friend etc/users/*/pass
                     rm -rf etc/sessions/`{cat etc/users/$logged_user/session} etc/users/$logged_user $sitedir/img/users/$logged_user $sitedir/img/users/nsfw/$logged_user
-                    notify_success='Account deleted.'
+                    notify_success=`{tl del_success}
                     dprint $logged_user deleted account from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
                     post_redirect $base_url/register
                 }
@@ -514,13 +509,12 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/report.tpl apps/users/report.tpl})
 
         if(! ~ $"post_arg_users_submit_report '') {
-            _status=()
             if(~ $"post_arg_users_report_user '' || ! test -s etc/users/$"post_arg_users_report_user/password)
-                _status='Missing or invalid user.'
+                _status=`{tl wrong_user}
             if not if(~ $"post_arg_users_report_reason '')
-                _status='Missing reason.'
+                _status=`{tl missing_reason}
             if not if(~ $"post_arg_users_report_email '')
-                _status='Missing email.'
+                _status=`{tl missing_email}
             if not {
                 echo $post_arg_users_report_email > etc/users/$post_arg_users_report_user/reported
                 echo Subject: [Report] [$post_arg_users_report_reason] $post_arg_users_report_user > /tmp/kwerc_mail
@@ -531,7 +525,7 @@ fn users_init {
                 echo $"post_arg_users_report_details | escape_html >> /tmp/kwerc_mail
                 sendmail -ir $noreply -F $siteTitle $moderation < /tmp/kwerc_mail
                 rm /tmp/kwerc_mail
-                notify_success='You report has been sent. Our moderation team will review it as soon as possible. Thank you for keeping VRLFP safe!'
+                notify_success=`{tl report_success}
             }
 
             notify_errors=$_status
@@ -543,26 +537,20 @@ fn users_init {
         handler_body_main=(tpl_handler `{get_lib_file users/forgot.tpl apps/users/forgot.tpl})
 
         if(! ~ $"post_arg_users_submit_forgot '') {
-            _status=()
             if(~ $"post_arg_users_forgot_user '' || ! test -s etc/users/$"post_arg_users_forgot_user/password)
-                _status='Missing or invalid user.'
+                _status=`{tl wrong_user}
             if not if(! ~ $"post_arg_users_forgot_email `{cat etc/users/$"post_arg_users_forgot_user/email})
-                _status='Wrong email address.'
+                _status=`{tl wrong_email}
             if not {
                 reset=`{genid 32}
                 mkdir etc/reset/$reset
                 echo $post_arg_users_forgot_user > etc/reset/$reset/user
                 date -n | awk '{ print ($1 + 86400) }' > etc/reset/$reset/expiry
 
-                if(test -f $sitedir/_kwerc/mail/reset)
-                    body=$sitedir/_kwerc/mail/reset
-                if not
-                    body=etc/mail/reset
-
-                sed 's,\$resetLink,'$base_url'/reset/'$reset',g; s,\$siteTitle,'$siteTitle',g; s,\$replyTo,'$security',g' < $body |
+                tl mail_reset | sed 's,\$resetLink,'$base_url'/reset/'$reset',g; s,\$siteTitle,'$siteTitle',g; s,\$replyTo,'$security',g' |
                     sendmail -ir $noreply -F $siteTitle $post_arg_users_forgot_email
 
-                notify_success='Success! Check your email for a link to reset your password.'
+                notify_success=`{tl reset_request_success}
                 dprint $logged_user sent password reset request from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
             }
 
@@ -574,24 +562,23 @@ fn users_init {
     if not if(~ $req_path /reset/*) {
         handler_body_main=(tpl_handler `{get_lib_file users/reset.tpl apps/users/reset.tpl})
 
-        _status=()
         rdir=etc/reset/`{basename $req_path}
 
         if(! test -d $rdir) {
-            _status='Invalid or already-used reset code. Check the link or try resetting again. Someone else may have reset your password. If you suspect this is the case, contact <a href="mailto:'$security'">'$security'</a>.'
+            _status=`{tl reset_fail}
             dprint $logged_user attempted to use invalid password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
         if not if(~ `{awk '{ print ($1 < '`{date -n}^') }' < $rdir/expiry} 1) {
-            _status='Confirmation code expired.'
+            _status=`{tl reset_expired}
             dprint $logged_user attempted to use expired password reset link from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
         }
         if not if(! ~ $"post_arg_users_submit_reset '') {
             if(! validate_password `{cat $rdir/user} $"post_arg_users_reset_pass $"post_arg_users_reset_pass2)
-                _status='Password missing, non-matching, or insecure.'
+                _status=`{tl bad_pass}
             if not {
                 echo -n $post_arg_users_reset_pass | genhash > etc/users/`{cat $rdir/user}^/password
                 rm -r $rdir
-                notify_success='Your password has been reset.'
+                notify_success=`{tl reset_success}
                 dprint $logged_user reset password from $HTTP_USER_AGENT on `{echo $REMOTE_ADDR | sed 's/\.[0-9]*\.[0-9]*$//'}^.xxx.xxx
             }
         }
@@ -603,18 +590,17 @@ fn users_init {
     if not if(~ $req_path /confirm/*) {
         handler_body_main=(tpl_handler `{get_lib_file users/confirm.tpl apps/users/confirm.tpl})
 
-        _status=()
         cdir=etc/confirm/`{basename $req_path}
 
         if(! test -d $cdir)
-            _status='Invalid confirmation code. Check the link or try resending.'
+            _status=`{tl confirm_fail}
         if not if(test -d etc/users/`{cat $cdir/user})
-            _status='Your email has already been confirmed.'
+            _status=`{tl already_confirmed}
         if not if(~ `{awk '{ print ($1 < '`{date -n}^') }' < $cdir/expiry} 1)
-            _status='Confirmation code expired.'
+            _status=`{tl confirm_expired}
         if not {
             mv etc/unconfirmed/`{cat $cdir/user} etc/users/
-            notify_success='Your email has been confirmed. Welcome!'
+            notify_success=`{tl confirm_success}
         }
 
         notify_errors=$_status
@@ -624,36 +610,35 @@ fn users_init {
 
 fn validate_new_user {
     user=$1; pass=$2; pass2=$3; email=$4; dob=$5; tos=$6
-    _status=()
 
     if(~ $"user '' || ! echo $user | sed 1q | grep -s '^'$allowed_user_chars'+$')
-        _status='Missing or invalid username. Allowed characters: A to Z, a to z, 0 to 9, _'
+        _status=`{tl invalid_user}
     if not if(ls -p etc/users etc/unconfirmed etc/deactivated etc/banned | grep -qi '^'$user'$')
-        _status='Username '''^$user^''' already taken. Please choose a different one.'
+        _status=`{tl user_taken}
 
-    if(! ~ $"user '')
+    if not if(! ~ $"user '')
         echo $"user >> etc/badpasswords
-    if(! validate_password $"user $"pass $"pass2)
-        _status=($_status 'Password missing, non-matching, or insecure.')
+    if not if(! validate_password $"user $"pass $"pass2)
+        _status=`{tl bad_pass}
 
-    if(~ $"email '')
-        _status=($_status 'Missing email.')
+    if not if(~ $"email '')
+        _status=`{tl missing_email}
     if not if(grep -q '^'$email'$' etc/users/*/email etc/unconfirmed/*/email etc/banned/*/email etc/disabled/*/email etc/deactivated/*/email)
-        _status=($_status 'An account already exists with this email address.')
+        _status=`{tl email_taken}
 
-    if(~ $"dob [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
+    if not if(! ~ $"tos yes)
+        _status=`{tl terms_fail}
+
+    if not if(~ $"dob [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] &&
        ~ `{echo $"dob | sed 's/^.*-(.*)-.*$/\1/' | awk '{ print ($1 >= 1 && $1 <= 12) }'} 1 &&
        ~ `{echo $"dob | sed 's/^.*-.*-(.*)$/\1/' | awk '{ print ($1 >= 1 && $1 <= 31) }'} 1) {
         dob=`{echo $"dob | sed 's,-,,g'}
         now=`{yyyymmdd `{date -u | sed 's/  / 0/'}}
         if(~ `{echo $dob $now | awk '{ print ($1 < $2 - 180000) }'} 0)
-            _status=($_status 'You must be at least 18 years of age to use this website.')
+            _status=`{tl age_fail}
     }
     if not
-            _status=($_status 'Wrong date format.')
-
-    if(! ~ $"tos yes)
-        _status=($_status 'You must agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a> to use this website.')
+            _status=`{tl wrong_date}
 
     notify_errors=$_status
     status=$_status
@@ -667,7 +652,7 @@ fn validate_password {
        ~ `{echo $"pass | awk '{ print (length($1) < 8) }'} 1 ||
        grep -si $"pass etc/badpasswords ||
        echo $"pass | grep -si $"user)
-        status='Bad password.'
+        status=`{tl bad_pass}
     if not status=''
 }
 
@@ -693,11 +678,6 @@ fn email_new_user {
     echo $user > etc/confirm/$confirm/user
     date -n | awk '{ print ($1 + 86400) }' > etc/confirm/$confirm/expiry
 
-    if(test -f $sitedir/_kwerc/mail/confirm)
-        body=$sitedir/_kwerc/mail/confirm
-    if not
-        body=etc/mail/confirm
-
-    sed 's,\$confirmLink,'$base_url'/confirm/'$confirm',g; s,\$siteTitle,'$siteTitle',g' < $body |
+    tl mail_confirm | sed 's,\$confirmLink,'$base_url'/confirm/'$confirm',g; s,\$siteTitle,'$siteTitle',g' |
         sendmail -ir $noreply -F $siteTitle `{cat etc/unconfirmed/$user/email}
 }

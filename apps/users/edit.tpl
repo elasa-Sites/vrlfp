@@ -1,27 +1,27 @@
-<h1>Edit profile</h1>
+<h1>%(`{tl edit_profile}%)</h1>
 
 % notices_handler
 
 % if(check_user) {
 %     dir=etc/users/$logged_user
 
-<p><a href="/user/%($logged_user%)" class="btn">Back to profile</a></p><br />
+<p><a href="/user/%($logged_user%)" class="btn">%(`{tl back_to_profile}%)</a></p><br />
 
 <form action="" method="POST" enctype="multipart/form-data">
-    <h5>Add picture</h5>
+    <h5>%(`{tl add_pic}%)</h5>
 % if(! check_user premium) {
-    <p>Free users are limited to four SFW profile pictures and one NSFW picture. <a href="/premium">Upgrade to VRLFP Premium</a>.</p>
+    <p>%(`{tl premium_pics}%)</p>
 % }
     <input type="file" name="users_picture" accept="image/*">
     <p>
         <input type="checkbox" name="users_picture_nsfw" id="picture_nsfw" value="yes">
-        <label for="picture_nsfw">NSFW?</label>
+        <label for="picture_nsfw">%(`{tl nsfw}%)</label>
     </p>
-    <p><button type="submit" name="users_submit_picture" value="yes">Submit</button></p><br />
+    <p><button type="submit" name="users_submit_picture" value="yes">%(`{tl submit}%)</button></p><br />
 </form>
 
-<h5>Remove picture</h5>
-<p>Click on a picture below to remove it from your profile.</p>
+<h5>%(`{tl remove_pic}%)</h5>
+<p>%(`{tl remove_pic_info}%)</p>
 % for(pic in `{ls -p $sitedir/img/users/$logged_user | sort -n}) {
 <form action="" method="POST" style="display: inline">
     <input type="hidden" name="users_picture_delete" value="%($pic%)">
@@ -40,13 +40,13 @@
     <h5>Profile info</h5>
 % if(! test -f $dir/dob) {
     <input type="date" name="users_dob" id="dob" required="" placeholder="YYYY-MM-DD">
-    <label for="dob">Date of birth (only your age will be public)</label>
+    <label for="dob">%(`{tl dob}%)</label>
 % }
 
     <input type="text" name="users_location" id="location" value="%(`{if(test -s $dir/location) escape_html < $dir/location}%)">
-    <label for="location">Location</label>
+    <label for="location">%(`{tl location}%)</label>
 
-    <br /><br /><h6>Contact info (shared with matches)</h6>
+    <br /><br /><h6>%(`{tl contact_info}%)</h6>
     <input type="text" name="users_vrc" id="vrc" value="%(`{if(test -s $dir/vrc) escape_html < $dir/vrc}%)" style="margin-top: 0">
     <label for="vrc">VRChat</label>
     <input type="text" name="users_discord" id="discord" value="%(`{if(test -s $dir/discord) escape_html < $dir/discord}%)">
@@ -56,9 +56,9 @@
     <input type="text" name="users_ig" id="ig" value="%(`{if(test -s $dir/ig) escape_html < $dir/ig}%)">
     <label for="ig">Instagram</label>
     <input type="text" name="users_pubemail" id="pubemail" value="%(`{if(test -s $dir/pubemail) escape_html < $dir/pubemail}%)">
-    <label for="pubemail">Email (separate from your account email)</label>
+    <label for="pubemail">%(`{tl pubemail_info}%)</label>
     <input type="text" name="users_phone" id="phone" value="%(`{if(test -s $dir/phone) escape_html < $dir/phone}%)">
-    <label for="phone">Phone</label>
+    <label for="phone">%(`{tl phone}%)</label>
 
     <br /><br /><p>
         <input type="checkbox" name="users_gender_Woman" id="gender_woman" value="yes" %(`{if(test -s $dir/gender && grep -s '^Woman$' $dir/gender) echo 'checked="yes"'}%)>
@@ -325,19 +325,19 @@
 % echo -n '    <textarea name="users_bio" id="bio">'
 % if(test -s $dir/bio) escape_html < $dir/bio
 </textarea>
-    <label for="bio">Bio (<a href="/premium">VRLFP Premium</a> users can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown syntax</a> here)</label>
+    <label for="bio">%(`{tl bio_info}%)</label>
 
 % if(check_user premium) {
     <input type="text" name="users_sketchfab" id="sketchfab" value="%(`{if(test -s $dir/sketchfab) escape_html < $dir/sketchfab}%)">
-    <label for="sketchfab">Sketchfab 3D model ID (upload your avatar <a href="https://sketchfab.com/" target="_blank">here</a> and copy the 32 character ID from your model URL)</label>
+    <label for="sketchfab">%(`{tl sketchfab_info}%)</label>
 % }
 % if not {
-    <p><a href="/premium">VRLFP Premium</a> users can embed a 3D model of their avatar on their profile.</p>
+    <p>%(`{tl premium_sketchfab}%)</p>
 % }
 
-    <p><button type="submit" name="users_submit" value="yes">Submit</button></p><br />
+    <p><button type="submit" name="users_submit" value="yes">%(`{tl submit}%)</button></p><br />
 </form>
 % }
 % if not {
-    <p><a href="/login?redirect=/edit" class="btn">Login</a></p>
+    <p><a href="/login?redirect=/edit" class="btn">%(`{tl login}%)</a></p>
 % }

@@ -1,4 +1,4 @@
-<h1>Sitemap</h1>
+<h1>%(`{tl sitemap}%)</h1>
 
 %{
 tmpfile=/tmp/kwerc_sitemap_$pid.txt
@@ -22,7 +22,7 @@ fn listDir {
     if(~ $#perm_redir_to 0) {
         echo '<ul class="sitemap-list">'
 
-        for(i in `{ls -dF $d^*/ $d^*.md $d^*.html $d^*.txt >[2]/dev/null | sed $dirfilter}) {
+        for(i in `{ls -dF $d^*/ $d^*.md $d^*.html $d^*.txt $d^*.tpl >[2]/dev/null | sed $dirfilter}) {
             #desc=`{get_file_title $i}
             u=`{echo $i|sed 's!'$sitedir'!!; '$dirclean's!/index$!/!; '}
             if(! ~ $#desc 0 && ! ~ $desc '')

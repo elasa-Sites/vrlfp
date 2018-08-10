@@ -1,10 +1,10 @@
-<h1>Administration console</h1>
+<h1>%(`{tl admin_console}%)</h1>
 
 % notices_handler
 
 <form name="prompt" method="POST">
 <input type="text" name="command" value="%($"post_arg_command%)">
-<p><button type="submit">Run</button></p>
+<p><button type="submit">%(`{tl run}%)</button></p>
 </form>
 
 %{
@@ -20,7 +20,7 @@ fn evl {
     }
 %}
 
-<h2>Debug</h2>
+<h2>%(`{tl debug}%)</h2>
 
 <hr><pre>
 % env | escape_html

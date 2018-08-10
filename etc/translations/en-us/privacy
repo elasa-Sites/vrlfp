@@ -1,0 +1,17 @@
+<h1>Privacy Policy</h1>
+
+<p>Your contact info (including your profile email, which is separate from your account email) will be shown to matches, which are defined as users whom both (1) you indicated that you want to date or hook up with and (2) indicated that they want to date or hook up with you. All other profile information that you give us will be shared publicly.</p>
+
+<p>Your account email will not be shown to other users or shared with third-parties. This is separate from your profile email.</p>
+
+<p>You will be served third-party content from Google, LLC including ads and fonts.</p>
+
+<p>We only log the minimum information required in case of security incidents. This includes login events, password changes, and account email address changes. The only Personally Identifiable Information contained in these logs is usernames and email addresses. IP addresses are anonymized to the first two octets.</p>
+
+<p>If you suspect your account has been compromised, please log out immediately and <a href="mailto:security@vrlfp.net">report the issue</a> with the word 'URGENT' in the subject line. In the email, include your username, the last time you accessed the site, and any details that led you to suspect a break-in.</p>
+
+<p>Your password and security answers are stored hashed and salted using bcrypt.</p>
+
+<p>If you find a vulnerability or privacy leak, please <a href="mailto:security@vrlfp.net">report it</a> discretely.</p>
+
+<p>You can review all of your data that we have on file in your <a href="/edit">profile settings</a> and <a href="/settings">account settings</a>.</p>

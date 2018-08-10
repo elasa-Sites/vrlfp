@@ -10,20 +10,20 @@
         <a href="/discord" target="_blank">Discord</a>
         <a href="https://twitter.com/vrlfp" target="_blank">Twitter</a>
         <a href="https://www.instagram.com/vrlfp/" target="_blank">Instagram</a><br />
-        <a href="/about">About Us</a>
-        <a href="/terms">Terms of Service</a>
-        <a href="/privacy">Privacy Policy</a>
-        <a href="https://code.kfarwell.org/vrlfp/" target="_blank">Code</a>
-        <a href="https://github.com/vrlfp" target="_blank">Issues & PRs</a>
-        <a href="/sitemap">Sitemap</a><br />
+        <a href="/about">%(`{tl about_us}%)</a>
+        <a href="/terms">%(`{tl terms_of_service}%)</a>
+        <a href="/privacy">%(`{tl privacy_policy}%)</a>
+        <a href="https://code.kfarwell.org/vrlfp/" target="_blank">%(`{tl code}%)</a>
+        <a href="https://github.com/vrlfp" target="_blank">%(`{tl issues_and_prs}%)</a>
+        <a href="/sitemap">%(`{tl sitemap}%)</a><br />
         <a href="mailto:hello@vrlfp.net">Contact</a>
-        <a href="mailto:story@vrlfp.net">Submit a Success Story</a>
-        <a href="mailto:press@vrlfp.net">Press</a>
-        <a href="mailto:support@vrlfp.net">Support</a>
+        <a href="mailto:story@vrlfp.net">%(`{tl submit_story}%)</a>
+        <a href="mailto:press@vrlfp.net">%(`{tl press}%)</a>
+        <a href="mailto:support@vrlfp.net">%(`{tl support}%)</a>
     </div>
     <div>
         <div class="desktop">
-            Made with ❤ in cyberspace
+            %(`{tl made_with_love}%)
             <span class="right">© 2018 %($siteTitle%), Inc.</span>
         </div>
         <div class="mobile center">

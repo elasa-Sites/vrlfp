@@ -1,12 +1,12 @@
-<h1>Authorize Discord</h1>
+<h1>%(`{tl authorize_discord}%)</h1>
 
 % notices_handler
 
 % if(! check_user) {
-<p>Log in to let kotoribot sync your VRLFP.net profile information (gender, sexuality, etc.) with your VRLFP Discord roles.</p>
+<p>%(`{tl discord_info}%)</p>
 
-<a href="/login?redirect=%($req_path%)" class="btn">Login</a>
+<a href="/login?redirect=%($req_path%)" class="btn">%(`{tl login}%)</a>
 
-<br />Don't have an account yet?<br />
-<a href="/register" class="btn">Register</a>
+<br />%(`{tl no_account_yet}%)<br />
+<a href="/register" class="btn">%(`{tl register}%)</a>
 % }

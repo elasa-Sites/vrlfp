@@ -14,58 +14,58 @@
 % if(! ~ $"logged_user '') {
 %     if(~ $logged_user $user) {
 %         if(! test -s $dir/gender || ! test -s $dir/lookingfor || ! test -s $dir/sexuality) {
-<p class="notify_errors">✘ You must fill out your gender, sexuality, and the type of relationship you're looking for before your profile will be shown to other users on the site!</p>
+<p class="notify_errors">✘ %(`{tl profile_incomplete}%)</p>
 %         }
-<a href="/edit" class="btn">Edit profile</a>
-<a href="/settings" class="btn">Settings</a>
-<form action="/login" method="POST"><button name="logout" value="yes">Logout</button></form>
+<a href="/edit" class="btn">%(`{tl edit_profile}%)</a>
+<a href="/settings" class="btn">%(`{tl settings}%)</a>
+<form action="/login" method="POST"><button name="logout" value="yes">%(`{tl logout}%)</button></form>
 %     }
 %     if not if(grep -q '^'$user^'$' etc/users/$logged_user/date) {
-<p>You want to date %($user%).</p>
-<form action="" method="POST"><button name="users_decision" value="undate">Undo</button></form>
+<p>%(`{tl you_want_date}%) %($user%).</p>
+<form action="" method="POST"><button name="users_decision" value="undate">%(`{tl undo}%)</button></form>
 %     }
 %     if not if(grep -q '^'$user^'$' etc/users/$logged_user/hookup) {
-<p>You want to hook up with %($user%).</p>
-<form action="" method="POST"><button name="users_decision" value="unhookup">Undo</button></form>
+<p>%(`{tl you_want_hookup}%) %($user%).</p>
+<form action="" method="POST"><button name="users_decision" value="unhookup">%(`{tl undo}%)</button></form>
 %     }
 %     if not if(grep -q '^'$user^'$' etc/users/$logged_user/friend) {
-<p>You want to be homies with %($user%).</p>
-<form action="" method="POST"><button name="users_decision" value="unfriend">Undo</button></form>
+<p>%(`{tl you_want_homie}%) %($user%).</p>
+<form action="" method="POST"><button name="users_decision" value="unfriend">%(`{tl undo}%)</button></form>
 %     }
 %     if not if(grep -q '^'$user^'$' etc/users/$logged_user/pass) {
-<p>You passed on %($user%).</p>
-<form action="" method="POST"><button name="users_decision" value="unpass">Undo</button></form>
+<p>%(`{tl you_passed}%) %($user%).</p>
+<form action="" method="POST"><button name="users_decision" value="unpass">%(`{tl undo}%)</button></form>
 %     }
 %     if not {
 <form action="" method="POST">
-    <button name="users_decision" value="date">Date</button>
-    <button name="users_decision" value="hookup">Hookup</button>
-    <button name="users_decision" value="friend">Homie</button>
-    <button name="users_decision" value="pass">Pass</button>
+    <button name="users_decision" value="date">%(`{tl date}%)</button>
+    <button name="users_decision" value="hookup">%(`{tl hookup}%)</button>
+    <button name="users_decision" value="friend">%(`{tl homie}%)</button>
+    <button name="users_decision" value="pass">%(`{tl pass}%)</button>
 </form>
 %     }
 % }
 % if not {
-<a href="/login?redirect=%($req_path%)" class="btn">Login</a>
+<a href="/login?redirect=%($req_path%)" class="btn">%(`{tl login}%)</a>
 % }
 
 % if(! ~ $"logged_user `{basename $req_path}) {
-<p><a href="/report/%(`{basename $req_path}%)" class="btn">Report</a></p>
+<p><a href="/report/%(`{basename $req_path}%)" class="btn">%(`{tl report}%)</a></p>
 % }
 
 % if(check_user mod) {
 <p>
-<form action="" method="POST"><button name="users_banyes" value="yes">Vote to ban</button></form>
-<form action="" method="POST"><button name="users_banno" value="yes">Vote against ban</button></form>
+<form action="" method="POST"><button name="users_banyes" value="yes">%(`{tl vote_yes}%)</button></form>
+<form action="" method="POST"><button name="users_banno" value="yes">%(`{tl vote_no}%)</button></form>
 </p>
 % if(test -f $dir/banyes) {
-<p>Votes for:
+<p>%(`{tl votes_for}%):
 %     for(mod in `{cat $dir/banyes})
 %         echo $mod', '
 </p>
 % }
 % if(test -f $dir/banno) {
-<p>Votes against:
+<p>%(`{tl votes_against}%):
 %     for(mod in `{cat $dir/banno})
 %         echo $mod', '
 </p>
@@ -76,9 +76,9 @@
 <form action="" method="POST">
     <p>
         <input type="text" name="users_ban_reason" id="reason">
-        <label for="reason">Ban reason (emailed to user)</label>
+        <label for="reason">%(`{tl reason_mailed}%)</label>
     </p>
-    <p><button name="users_submit_ban" value="yes">Ban</button></p><br />
+    <p><button name="users_submit_ban" value="yes">%(`{tl ban}%)</button></p><br />
 </form>
 % }
 % if not if(check_user mod &&
@@ -87,9 +87,9 @@
 <form action="" method="POST">
     <p>
         <input type="text" name="users_ban_reason" id="reason">
-        <label for="reason">Ban reason (emailed to user)</label>
+        <label for="reason">%(`{tl reason_mailed}%)</label>
     </p>
-    <p><button name="users_submit_ban" value="yes">Ban</button></p><br />
+    <p><button name="users_submit_ban" value="yes">%(`{tl ban}%)</button></p><br />
 </form>
 % }
 
@@ -98,23 +98,47 @@ if(! ~ $"logged_user '' &&
    grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/hookup etc/users/$logged_user/friend &&
    grep -q '^'$logged_user^'$' $dir/date $dir/hookup $dir/friend) {
     if(grep -q '^'$user^'$' etc/users/$logged_user/date &&
-       grep -q '^'$logged_user^'$' $dir/date)
-        echo '<p>It''s a match! '$user' wants to date you too.</p>'
+       grep -q '^'$logged_user^'$' $dir/date) {
+        echo -n '<p>'
+        tl its_a_match
+        echo -n ' '$user' '
+        tl wants_date_too
+        echo '</p>'
+    }
     if not if(grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/friend &&
-              grep -q '^'$logged_user^'$' $dir/hookup)
-        echo '<p>'$user' wants to hook up with you.</p>'
+              grep -q '^'$logged_user^'$' $dir/hookup) {
+        echo -n '<p>'$user' '
+        tl wants_hookup
+        echo '</p>'
+    }
     if not if(grep -q '^'$user^'$' etc/users/$logged_user/hookup &&
-              grep -q '^'$logged_user^'$' $dir/hookup)
-        echo '<p>It''s a match! '$user' wants to hook up with you too.</p>'
+              grep -q '^'$logged_user^'$' $dir/hookup) {
+        echo -n '<p>'
+        tl its_a_match
+        echo -n ' '$user' '
+        tl wants_hookup_too
+        echo '</p>'
+    }
     if not if(grep -q '^'$user^'$' etc/users/$logged_user/hookup etc/users/$logged_user/friend &&
-              grep -q '^'$logged_user^'$' $dir/date)
-        echo '<p>'$user' wants to date you.</p>'
+              grep -q '^'$logged_user^'$' $dir/date) {
+        echo -n '<p>'$user' '
+        tl wants_date
+        echo '</p>'
+    }
     if not if(grep -q '^'$user^'$' etc/users/$logged_user/friend &&
-              grep -q '^'$logged_user^'$' $dir/friend)
-        echo '<p>It''s a match! '$user' wants to be your homie too.</p>'
+              grep -q '^'$logged_user^'$' $dir/friend) {
+        echo -n '<p>'
+        tl its_a_match
+        echo -n ' '$user' '
+        tl wants_homie_too
+        echo '</p>'
+    }
     if not if(grep -q '^'$user^'$' etc/users/$logged_user/date etc/users/$logged_user/hookup &&
-              grep -q '^'$logged_user^'$' $dir/friend)
-        echo '<p>'$user' wants to be your homie.</p>'
+              grep -q '^'$logged_user^'$' $dir/friend) {
+        echo -n '<p>'$user' '
+        tl wants_homie
+        echo '</p>'
+    }
 
     if(test -s $dir/vrc || test -s $dir/discord || test -s $dir/sc || test -s $dir/ig || test -s $dir/pubemail || test -s $dir/phone) {
         echo '<ul>'
@@ -145,14 +169,18 @@ if(! ~ $"logged_user '' &&
             echo '</a></p></li>'
         }
         if(test -s $dir/pubemail) {
-            echo -n '    <li><p>Email: <a href="mailto:'
+            echo -n '    <li><p>'
+            tl email
+            echo -n ': <a href="mailto:'
             escape_html < $dir/pubemail
             echo -n '">'
             escape_html < $dir/pubemail
             echo '</a></p></li>'
         }
         if(test -s $dir/phone) {
-            echo -n '    <li><p>Phone: <a href="sms:'
+            echo -n '    <li><p>'
+            tl phone
+            echo -n ': <a href="sms:'
             escape_html < $dir/phone
             echo -n '">'
             escape_html < $dir/phone
@@ -161,7 +189,9 @@ if(! ~ $"logged_user '' &&
         echo '</ul>'
     }
     if not {
-        echo '<p>'$user' hasn''t added any contact info to their profile yet. Check back later!</p>'
+        echo -n '<p>'$user' '
+        tl no_contact
+        echo '</p>'
     }
 }
 %}
@@ -252,17 +282,23 @@ if(test -s $dir/age || test -s $dir/location || test -s $dir/gender ||
    test -s $dir/kinks || test -s $dir/games || test -s $dir/vr)
     echo '<ul>'
 if(test -s $dir/dob) {
-    echo '    <li><p><strong>Age:</strong>'
-    echo `{sed 's,-,,g' < $dir/dob} `{yyyymmdd `{date -u | sed 's/  / 0/'}} | awk '{ print (int(($2 - $1) / 10000)) }'
+    echo -n '    <li><p><strong>'
+    tl age
+    echo -n ':</strong> '
+    echo -n `{sed 's,-,,g' < $dir/dob} `{yyyymmdd `{date -u | sed 's/  / 0/'}} | awk '{ print (int(($2 - $1) / 10000)) }'
     echo '    </p></li>'
 }
 if not if(test -s $dir/age) {
-    echo '    <li><p><strong>Age:</strong>'
+    echo -n '    <li><p><strong>'
+    tl age
+    echo -n ':</strong> '
     escape_html < $dir/age
     echo '</p></li>'
 }
 if(test -s $dir/location) {
-    echo '    <li><p><strong>Location:</strong>'
+    echo -n '    <li><p><strong>'
+    tl location
+    echo -n ':</strong> '
     escape_html < $dir/location
     echo '    </p></li>'
 }
@@ -334,7 +370,7 @@ if(test -s $dir/age || test -s $dir/location || test -s $dir/gender ||
 
 if(test -s $dir/bio) {
     echo '<div id="bio" class="card">'
-    echo '<h2 style="margin: 0 0 1.424rem 0">Bio</h2>'
+    echo '<h2 style="margin: 0 0 1.424rem 0">'`{tl bio}^'</h2>'
     if(test -f $dir/premium)
         $formatter < $dir/bio | tidy --show-body-only yes >[2]/dev/null
     if not

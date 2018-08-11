@@ -13,7 +13,7 @@ if(check_user) {
            grep -q '^'$logged_user^'$' etc/users/$user/date) {
             echo -n '<p>✔ '
             tl its_a_match
-            echo -in ' <a href="/user/'$user'">'$user'</a> '
+            echo -n ' <a href="/user/'$user'">'$user'</a> '
             tl wants_date_too
             echo '</p>'
         }

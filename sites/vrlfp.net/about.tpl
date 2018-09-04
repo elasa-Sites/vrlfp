@@ -29,4 +29,4 @@
     </strong></div>
 </div>
 
-<br /><p class="center">%(`{tl moderators}%): <a href="/user/Aurora_Dazzle">Aurora_Dazzle</a>, <a href="/user/Crowii">Crowii</a>, <a href="/user/DICEBlOCK">DICEBlOCK</a>, <a href="/user/Slik">Slik</a></p>
+<br /><p class="center">%(`{tl moderators}%): <a href="/user/Aurora_Dazzle">Aurora_Dazzle</a>, <a href="/user/DICEBlOCK">DICEBlOCK</a>, <a href="/user/Slik">Slik</a></p>

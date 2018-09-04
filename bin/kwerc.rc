@@ -14,7 +14,6 @@ difs=$ifs # Used to restore default ifs when needed
 dirfilter='s/\*$//; s,/+\./+,/,g; s,^\./,,; /\/[._][^\/]/d; /'$forbidden_uri_chars'/d; /\/sitemap\.xml$/d; /\/index\.(md|html|txt|tpl)$/d; /\/(robots|sitemap)\.txt$/d; /_kwerc\/?$/d; '
 dirclean=' s/\.(md|html|txt|tpl)$//; '
 
-headers=lib/headers.tpl
 res_tail='</body></html>'
 http_content_type='text/html'
 kwerc_apps=( apps/* )
@@ -43,6 +42,7 @@ fn kwerc_exec_request {
     site=$SERVER_NAME
     base_url=$protocol://$site
     sitedir=$sitesdir/$site
+    headers=`{get_lib_file headers.tpl}
     master_template=`{get_lib_file master.tpl}
     current_date_time=`{date}
 
